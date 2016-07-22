@@ -45,6 +45,220 @@
 
 
 <div class="slide">
+<h1>Question: How do you write a big program?</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>Question: How do you write a big program?</h1>
+<h1>Answer: By combining multiple little programs.</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>Question: How do you write a big program?</h1>
+<h1>Answer: By combining multiple little programs.</h1>
+<h1>Question: How do you combine little programs?</h1>
+</div>
+
+
+<div class="slide">
+<h1>Question: How do you write a big program?</h1>
+<h1>Answer: By combining multiple little programs.</h1>
+<h1>Question: How do you combine little programs?</h1>
+<h1>Answer: With another program.</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>Question: How do you write a big program?</h1>
+<h1>Answer: By combining multiple little programs.</h1>
+<h1>Question: How do you combine little programs?</h1>
+<h1>Answer: With another program.</h1>
+<h1>Question: Wait a minute... what's a program?</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>Question: How do you write a big program?</h1>
+<h1>Answer: By combining multiple little programs.</h1>
+<h1>Question: How do you combine little programs?</h1>
+<h1>Answer: With another program.</h1>
+<h1>Question: Wait a minute... what's a program?</h1>
+<h1>Answer:</h1>
+<p>Back in the 1930's some Mathematicians decided to call "programs"(or algorithms) the set of Computable functions, which are a subset of "all possible functions". Being mathematicians, the next step was to figure out which functions from the set of all possible functions are computable. We know some functions are computable and some are not. In particular, there are two "models" of computable functions: Turing Machines (discovered by Alan Turing), and expressions in the Lambda Calculus (discovered by Alonzo Church). It turns out that these two models are equivalent (every function that can be computed by a Turing Machine has an expression in the Lambda calculus, and every expression in the Lambda calculus can be computed by a Turing machine). Every function that we have found to be computable can be expressed by those models, however, we haven't proved that these models are capable of expressing <em>every</em> computable function. However, it is generally accepted that they do, and this is called the <strong>Church-Turing Thesis</strong>.</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Question: How do you write a big program?</h1>
+<h1>Answer: By combining multiple little programs.</h1>
+<h1>Question: How do you combine little programs?</h1>
+<h1>Answer: With another program.</h1>
+<h1>Question: Wait a minute... what's a program?</h1>
+<h1>Answer:</h1>
+<p>Back in the 1930's some Mathematicians decided to call "programs"(or algorithms) the set of Computable functions, which are a subset of "all possible functions". Being mathematicians, the next step was to figure out which functions from the set of all possible functions are computable. We know some functions are computable and some are not. In particular, there are two "models" of computable functions: Turing Machines (discovered by Alan Turing), and expressions in the Lambda Calculus (discovered by Alonzo Church). It turns out that these two models are equivalent (every function that can be computed by a Turing Machine has an expression in the Lambda calculus, and every expression in the Lambda calculus can be computed by a Turing machine). Every function that we have found to be computable can be expressed by those models, however, we haven't proved that these models are capable of expressing <em>every</em> computable function. However, it is generally accepted that they do, and this is called the <strong>Church-Turing Thesis</strong>.</p>
+<h1>Question: Do you have any tylenol?</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>Question: How do you write a big program?</h1>
+<h1>Answer: By combining multiple little programs.</h1>
+<h1>Question: How do you combine little programs?</h1>
+<h1>Answer: With another program.</h1>
+<h1>Question: Wait a minute... what's a program?</h1>
+<h1>Answer:</h1>
+<p>Back in the 1930's some Mathematicians decided to call "programs"(or algorithms) the set of Computable functions, which are a subset of "all possible functions". Being mathematicians, the next step was to figure out which functions from the set of all possible functions are computable. We know some functions are computable and some are not. In particular, there are two "models" of computable functions: Turing Machines (discovered by Alan Turing), and expressions in the Lambda Calculus (discovered by Alonzo Church). It turns out that these two models are equivalent (every function that can be computed by a Turing Machine has an expression in the Lambda calculus, and every expression in the Lambda calculus can be computed by a Turing machine). Every function that we have found to be computable can be expressed by those models, however, we haven't proved that these models are capable of expressing <em>every</em> computable function. However, it is generally accepted that they do, and this is called the <strong>Church-Turing Thesis</strong>.</p>
+<h1>Question: Do you have any tylenol?</h1>
+<h1>Answer: Ah... nevermind. Programs are functions.</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>So let's go back to combining programs... I mean functions. You said we're going to use functions?</h1>
+
+</div>
+
+
+
+<div class="slide">
+<h1>A "multithreaded" program.</h1>
+<p>Let's start with a simple class to keep a counter.</p>
+<pre><code class="java">final class Counter {
+	private int counter;
+	public Counter(int initial) { this.counter = initial; }
+	public int increment() { return this.counter++; }
+	public int decrement() { return this.counter--; }
+	public int get() { return this.counter; }
+	public int set(int value) { return this.counter = value; }
+}</code></pre>
+<p>Now, we want to make two counters, and "drain" one to another. And we would like to do this concurrently, because maybe we're building a work queue of some sort, and want to keep a list of completed jobs. Now, since there are going to be two counters(or lists) that other threads may be accessing, we want to use a lock to keep other threads from catching us altering the states of both counters. So let's write a simple class to do this. Also, since these things can take some time, we'll use some calls to <code>Thread.sleep(...)</code> to symbolize this.</p>
+<pre><code class="java">final class Drain implements Runnable {
+	private final Counter source;
+	private final Counter sink;
+	public Drain(Counter source, Counter sink) {
+		this.source = source;
+		this.sink = sink;
+	}
+	@Override public void run() {
+		boolean flag = true;
+		while(flag) {
+			synchronized(source) {
+				if(source.get() > 0) {
+					synchronized(sink) {
+						try { Thread.sleep(150); } catch (InterruptedException ie) { }
+						source.decrement();
+						sink.increment();
+						System.out.println("Drain(" + this + "): " + source.get() + ", " + sink.get());
+					}
+				} else {
+					flag = false;
+				}
+				try { Thread.sleep(40); } catch (InterruptedException ie) { }
+			}
+		}
+	}
+}</code></pre>
+</div>
+
+<div>
+<h1>Running our multithreaded program "solo"</h1>
+<p>So let's make a program to use our classes.</p>
+<pre><code class="java">public final class Threads {
+	public static void main(String[] args) throws Exception {
+		final Counter a = new Counter(5);
+		final Counter b = new Counter(10);
+		final Drain d1 = new Drain(a, b);
+		System.out.println("Counters: " + a.get() + ", " + b.get());
+		final Thread t1 = new Thread(d1);
+		t1.start();
+		t1.join();
+		System.out.println("Counters: " + a.get() + ", " + b.get());
+	}
+}</code></pre>
+<p>So the output of this will be something like:</p>
+<pre>Counters: 5, 10
+Drain(Drain@3be5d207): 4, 11
+Drain(Drain@3be5d207): 3, 12
+Drain(Drain@3be5d207): 2, 13
+Drain(Drain@3be5d207): 1, 14
+Drain(Drain@3be5d207): 0, 15</pre>
+
+<p>I think it's fair to say that this small program is actually reasonably correct, and could be used (or "composed") in a larger program and work reliably. But of course, what happens when we write a slightly different program, using two drains?</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Going down the multithreaded drain.</h1>
+<p>So now let's write a program to use two drains:</p>
+<pre><code class="java">public final class Threads2 {
+	public static void main(String[] args) throws Exception {
+		final Counter a = new Counter(5);
+		final Counter b = new Counter(10);
+		final Thread t1 = new Thread(new Drain(a, b));
+		final Thread t2 = new Thread(new Drain(b, a));
+		t1.start();
+		t2.start();
+		t1.join();
+		t2.join();
+		System.out.println("Counters: " + a.get() + ", " + b.get());
+	}
+}</code></pre>
+<p>So what does this program output?</p>
+<pre>Counters: 5, 10
+Drain(Drain@1f2f0ce9): 4, 11</pre>
+<p>Well, at least that's what it's output so far. I wrote this sometime last week, and I am still waiting for it to finish...</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Going down the multithreaded drain.</h1>
+<p>So now let's write a program to use two drains:</p>
+<pre><code class="java">public final class Threads2 {
+	public static void main(String[] args) throws Exception {
+		final Counter a = new Counter(5);
+		final Counter b = new Counter(10);
+		final Thread t1 = new Thread(new Drain(a, b));
+		final Thread t2 = new Thread(new Drain(b, a));
+		t1.start();
+		t2.start();
+		t1.join();
+		t2.join();
+		System.out.println("Counters: " + a.get() + ", " + b.get());
+	}
+}</code></pre>
+<p>So what does this program output?</p>
+<pre>Counters: 5, 10
+Drain(Drain@1f2f0ce9): 4, 11</pre>
+<p>Well, at least that's what it's output so far. I wrote this sometime last week, and I am still waiting for it to finish...</p>
+<p>But of course, if you're paying attention, you'll realize that this program will never finish. Feel free to play with the sleep values though, because you can get other incorrect behaviors too (not always reliably incorrect of course...), like thread starvation, and so on. The issue lies in the <code>synchronized</code> blocks. Both drains lock the source first, then the sink. In this case, they each lock the counter the other one needs first, and then start waiting (for forever) until the other lock becomes available, of course, since the other drain holds the lock and is sleeping until the other one releases the lock, this can never happen. Now, I have gone to some effort to make an "obvious" and reliable deadlock (this is a textbook deadlock), but when people say that multithreaded programming is hard to do correctly, this is one example of what is discussed.</p>
+</div>
+
+
+
+<div class="slide">
+<h1>A second act</h1>
+<p>Now, this is a group of functional programmers, so clearly the mistake is that I used Java. So let's rewrite this in Erlang.</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Composing threads</h1>
+<p>Multithreaded programs have an interesting property. We can write correct multithreaded programs, and then combine them with other multithreaded programs, that are also correct, and there is no guarantee that larger combined program will be correct. This goes way beyond mutable state. And while some programs assign numerical values to locks and use the ordering imposed by the integer values on locks to have a canonical locking order, there are still other bugs that regularly occur. Many result in security issues.</p>
+
+<p>I have a claim.</p>
+<h2>Mulithreaded programming is hard because there is no composition operator that preserves correctness when combining two correct multithreaded programs.</h2>
 </div>
 
 
@@ -71,7 +285,7 @@
 <dl>
 	<dt>Infix style: <code>a + (b + c) = (a + b) + c</code></dt>
 	<dt>Prefix style: <code>+(a,+(b,c)) = +(+(a,b), c)</code></dt>
-	<dd>This is the <em>associative property</em>. The idea is rather simple: it doesn't matter which pair of numbers we "add" together first, as long as we don't change the order(i.e. grouping doesn't matter). Of course, we might decide to confuse this with commutativity which says "order" doesn't matter, because addition and multiplication are commutative as well. For an example of an operation that is associative but not commutative consider list concatenation: <code>[1] + ([2] + [3]) = ([1] + [2]) + [3] = [1,2,3]</code>, but <code>[1] + [2] != [2] + [1]</code> (because <code>[1,2] != [2,1]</code></dd>
+	<dd>This is the <em>associative property</em>. The idea is rather simple: it doesn't matter which pair of numbers we "add" together first, as long as we don't change the order(i.e. grouping doesn't matter). Of course, we might decide to confuse this with commutativity which says "order" doesn't matter, because addition and multiplication are commutative as well. For an example of an operation that is associative but not commutative consider list concatenation: <code>[1] + ([2] + [3]) = ([1] + [2]) + [3] = [1,2,3]</code>, but <code>[1] + [2] != [2] + [1]</code> (because <code>[1,2] != [2,1]</code>)</dd>
 
 	<dt>Infix style: <code>a + b = b + a</code></dt>
 	<dt>Prefix style: <code>+(a,b) = +(b,a)</code></dt>
