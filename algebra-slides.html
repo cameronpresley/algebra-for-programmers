@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Algebra for Programmers</title>
+	<link rel="stylesheet" href="default.min.css">
+	<style type="text/css">
+		h1 { text-align: center; }
+		h2 { text-align: center; }
+		h3 { text-align: center; }
+		dd {
+			margin-bottom: 1em;
+			margin-top: 0.5em;
+		}
+	</style>
+	<script src="highlight.min.js"></script>
+	<script src="jquery-1.8.2.min.js"></script>
+	<script src="slideshow.js"></script>
+	<script>hljs.initHighlightingOnLoad();</script>
+	<script>
+		$(document).ready(function () {
+			slideshow();
+		});
+</script>
+</head>
+<body>
+<div class="slide">
+	<h1>Algebra for Programmers</h1>
+	<h2>Emily Estes</h2>
+	<h3>2016-??-?? @ Functional Knox Meetup</h3>
+	<p>To navigate: left arrow - previous slide, right arrow - next slide, escape - toggle slide show mode.</p>
+</div>
+
+
+<div class="slide">
+<h1>Goals of this presentation</h1>
+<ul>
+	<li>Explain terminology frequently used in discussion of functional programming, in particular terms from algebra and (some) terms of category theory.</li>
+	<li>Provide a review topics in elementary algebra(i.e. what is typically covered in high school algebra classes).</li>
+	<li>Connect algebraic topics to their appearance in functional programming.</li>
+	<li>Try to help alleviate "jargon overload" to people new to functional programming...</li>
+</ul>
+<blockquote>1990 - A committee formed by Simon Peyton-Jones, Paul Hudak, Philip Wadler, Ashton Kutcher, and People for the Ethical Treatment of Animals creates Haskell, a pure, non-strict, functional language. Haskell gets some resistance due to the complexity of using monads to control side effects. Wadler tries to appease critics by explaining that <em>"a monad is a monoid in the category of endofunctors, what's the problem?"</em> - from <a href="http://james-iry.blogspot.com/2009/05/brief-incomplete-and-mostly-wrong.html">A Brief, Incomplete, and Mostly Wrong History of Programming Languages</a></blockquote>
+</div>
+
+
+
+<div class="slide">
+</div>
+
+
+
+<div class="slide">
+<h1>Arithmetic (Elementary Algebra)</h1>
+<p>Most of us are familiar with numbers, and some basic operations on them like addition, subtraction, multiplication, and division. For better or worse, we even had some terminology inflicted on us in school. So let's review some of those terms and ideas. Please remember, the following slides are discussing properties of addition and multiplication and numbers. Don't try to over think it.</p>
+
+<dl>
+	<dt>Infix style: <code>a + 0 = 0 + a = a</code></dt>
+	<dt>Prefix style: <code>+(a,0) = +(0,a) = a</code></dt>
+	<dd>This is the <em>existence of an identity element</em> property. The idea is that there is an element such that when you combine it with anything else, you just get the same thing. For multiplication, the identity is of course 1 since <code>1 * a = a * 1 = a</code>. For addition, <code>0 + a = a + 0 = a</code>.</dd>
+
+	<dt>Infix style: <code>a + a-inverse = a-inverse + a = 0</code></dt>
+	<dt>Prefix style: <code>+(a, inverse(a)) = +(inverse(a), a) = a</code><dt>
+	<dd>This is the <em>existence of inverses</em> property. The idea is that for every number or element in the set we have another number or element that acts as it's "inverse", such that when we combine them we get the identity element or number. One important idea that comes out of this is that subtraction and division can be thought of as "non-primitive" operations, and instead the addition (or multiplication) by an "inverse" operator that finds the inverse of an element or number. So <code>a - b = a + inverse(b) = a + b<sup>-1</sup></code>. The "superscripted -1" is often used as notation for "take the inverse" in algebra. Let's look at some examples to help explain: <code>a + -a = 0</code>, with multiplication <code>a * 1/a = 1</code>.</dd>
+</dl>
+</div>
+
+
+
+<div class="slide">
+<h1>Arithmetic (Elementary Algebra), part 2</h1>
+<dl>
+	<dt>Infix style: <code>a + (b + c) = (a + b) + c</code></dt>
+	<dt>Prefix style: <code>+(a,+(b,c)) = +(+(a,b), c)</code></dt>
+	<dd>This is the <em>associative property</em>. The idea is rather simple: it doesn't matter which pair of numbers we "add" together first, as long as we don't change the order(i.e. grouping doesn't matter). Of course, we might decide to confuse this with commutativity which says "order" doesn't matter, because addition and multiplication are commutative as well. For an example of an operation that is associative but not commutative consider list concatenation: <code>[1] + ([2] + [3]) = ([1] + [2]) + [3] = [1,2,3]</code>, but <code>[1] + [2] != [2] + [1]</code> (because <code>[1,2] != [2,1]</code></dd>
+
+	<dt>Infix style: <code>a + b = b + a</code></dt>
+	<dt>Prefix style: <code>+(a,b) = +(b,a)</code></dt>
+	<dd>This is the <em>commutative property</em>. The idea is that it doesn't matter which parameter to the operation comes first, the result is the same either way. Since we're sticking to "numbers" let's talk about an operation which is commutative but not associative, consider the idea of taking the "midpoint" as a binary operation: <code>mid(a,b) = (a + b) / 2</code>. Now, <code>mid(a,b) = (a + b)/2 = (b + a)/2 = mid(b,a)</code>, so this is commutative, but consider: <code>mid(a,mid(b,c)) = (a + ((b+c)/2)) / 2 = a/2 + b/4 + c/4</code>, and <code>mid(mid(a,b),c) = (((a+b)/2) + c) / 2 = a/4 + b/4 + c/2</code>. So, let a = 2, b = 3, c = 4, and we have 2.75 and 3.25 respectively, so clearly, this is not associative.</dd>
+</dl>
+</div>
+
+
+
+<div class="slide">
+<h1>Arithmetic (Elementary Algebra), part 3</h1>
+<dl>
+	<dt>Infix style: <code>a * (b + c) = a*b + a*c</code></dt>
+	<dt>Prefix style: <code>*(a,+(b,c)) = +(*(a,b),*(a,c))</code></dt>
+	<dd>This is the <em>distributive property</em>. Previously we were just talking about one operation, the distributive property is about two operations. Of course. This actually isn't entirely true... considering we discussed the idea that some operations are NOT commutative, it's more fair to call this the <strong>left</strong> <em>distributive property</em>. Not every pair of operations is distributive as well, but I'll ignore that for the time being.</dd>
+
+	<dt>Infix style: <code>(a + b) * c = a*c + b*c</code></dt>
+	<dt>Prefix style: <code>*(+(a,b),c) = +(*(a,c),*(b,c))</code></dt>
+	<dd>This is the <em>right distributive property</em>. For completeness, since not everything is commutative.</dd>
+
+	<dt>Infix style: <code>a = b, b = c implies a = c</code></dt>
+	<dt>Prefix style: <code>=(a,b) and =(b,c) implies =(a,c)</code></dt>
+	<dd>This is the <em>transitive property</em>. Equality itself is a "binary operation", and one of the most important aspects of it is that it is transitive. But there are other transitive operations: "less than or equal to"(<code>&lt;=</code>) is transitive, so is "greater than or equal to". "is subset of" is also transitive. This idea becomes very important, we'll come back to it later.</dd>
+
+	<dt><code>f(g(x)) = (f &compfn; g)(x)</code></dt>
+	<dd>The &compfn; is known as the <em>function composition operator</em>. The previous discussions about these properties have focused on numbers and operations on numbers, but in algebra we talk about "operations" a lot, and function composition is an operation, it even has a symbol.</dd>
+</dl>
+</div>
+
+
+
+<div class="slide">
+<h1>Mathematical and Logic symbols</h1>
+<p>While the previous discussion of elementary algebra should have been a "review" in some sense, this is probably new material for many people. When reading mathematical texts, especially ones involving logic, there are many symbols that are used in a specific, formal way. However, many of these symbols can be "read" as phrases/words in English that should make sense to many programmers.</p>
+
+<dl>
+	<dt><code>&forall;</code></dt>
+	<dd>"Universal Quantification". When writing in English you can substitute the phrase <em>for all</em> or <em>for every</em>. It expresses the notion that some statemant is true "for every" value. While it is easy to compare this to "looping" in programming, it is probably more accurate to compare "for all" statements to "loop invariants", i.e. something that will always be "true".</dd>
+	<dt><code>&Exists;</code></dt>
+	<dd>"Existential Quantification". When writing this in English the phrase <em>there exists</em>, <em>there is</em>, or <em>there are</em> should be used. It can be thought of as implying a search for value that would be successful. There is a value that wouls satisfy some statement.</dd>
+	<dt><code>&Element;</code></dt>
+	<dd>When reading this symbol read it as "element of", "in".</dd>
+	<dt><code>&top;</code></dt>
+	<dd>This symbol is called "Top", think of it as a "penultimate maximum" value.</dd>
+	<dt><code>&bot;</code></dt>
+	<dd>This symbol is called "Bottom", think of it as a "penultimate minimum" value.</dd>
+	<dt><code>&VerticalBar;</code> also <code>:</code></dt>
+	<dd>This symbol is read as <em>such that</em> or <em>where</em>. It is used to place a condition or predicate (the right side) on the expression on the left side.</dd>
+	<dt><code>&and;</code></dt>
+	<dd>"Conjunction". <em>and</em>. Really, just a logical "and".</dd>
+	<dt><code>&or;</code></dt>
+	<dd>"Disjunction". <em>or</em>. Really, just a logical "or".</dd>
+	<dt><code>&Implies;</code></dt>
+	<dd>"Implication". When read this symbol use the word "implies" or "if - then". Basically, if the left hand side is true, then the right hand side is entailed or implied to be true as well.</dd>
+	<dt>(a horizontal bar)</dt>
+	<dd>"entails", "if/then", or "judgement". In logic, this is a way of expressing a conditional truth. Two expressions are written, one on top of the bar, the other on the bottom. If the top expression is true, then the bottom one is true as well, i.e. the bottom statement is entailed by the (truth of) the top statement.</dd>
+</dl>
+</div>
+
+
+
+<div class="slide">
+<h1>Sets</h1>
+<p>In modern mathematics, sets have been formalized, but the idea is intuitive: a set of <em>things</em> has a notion of membership, a thing either is or is not a member of a set. There is no notion of order though. There is no "first" member of a set. However, we can frequently define sets (or subsets of sets) using some "predicate" to determine membership. For instance the "the set of all numbers evenly divisible by 2" is a set. Sets are often written a list of things in between { and }, so <code>{ 1, 2, 3, 4 }</code> would be a set. The set with nothing in it is called the <em>empty set</em>, and it is often written: <code>&emptyset;</code>, however it can also be written <code>{}</code>. "Predicates" are mathematical statements whose values are either true or false. Sets that are defined in terms of another set and "predicates" are often written in a mathematical notation like so:
+<code>Evens = { x &Element; &integers; &VerticalBar; x mod 2 = 0 }</code>.
+Which if read in "English" says: <em>"The set 'Evens' is equal to the set x's in the Integers such that x modulo 2 is equal to 0."</em></p>
+
+<h2>Operations on Sets</h2>
+<dl>
+	<dt><code>A &Union; B = { x &VerticalBar; x &Element; A or x &Element; B }</code></dt>
+	<dd>This is the <em>set union</em> operator. It produces a new set. An element is a member of the new set if it was a member of at least one of the sets we combined.</dd>
+	<dt><code>A &Intersection; B = { x &VerticalBar; x &Element; A and x &Element; B }</code></dt>
+	<dd>This is the <em>set intersection</em> operator. It produces a new containing only elements that were in both sets.</dd>
+	<dt><code>A &subset; B = true if and only if &forall; x &Element; A, x &Element; B</code></dt>
+	<dd>The <em>subset</em> relationship is a binary operator like equality that is true if all the elements of A are also elements of B.</dd>
+	<dt><code>A = B if A &subset; B and B &subset; A</code></dt>
+	<dd>Two sets are considered equal if they are subsets of each other (i.e. every element of A is also in B, and every element in B is also in A).</dd>
+	<dt><code>A &setminus; B = { x &Element; A &VerticalBar; x &notin; B }</code></dt>
+	<dd><em>Set difference</em> or <em>complement</em> is an operator that gives a subset A containing only the elements that were not also in B. This could actually be the empty set (<code>&emptyset;</code>).</dd>
+	<dt><code>A &Cross; B = { (a,b) &VerticalBar; a &Element; A, b &Element; B }</code></dt>
+</dl>
+</div>
+
+
+
+<div class="slide">
+<h1>Tuples</h1>
+<p>A n-tuple is just an ordered "list" of <code>n</code> things. You can also have a set of tuples(in fact, tables in SQL are sets of n-tuples). A 2-tuple is often just called an "ordered pair". However, in ordinary mathematics, we like to reduce everything to sets, so I want to suggest we can encode "n-tuples" as sets. Now, the ordered pair: <code>(a,b)</code> can't simply be written as the set <code>{ a, b }</code>, because in a set order doesn't matter. But we can tell if two sets are equal to each other, we can also take the difference of two sets. So we can define a tuple(or "encode a tuple as a set") as follows:
+<code>P = (a, b) = { {a}, {a,b} }</code>
+And we can even define expressions in terms of set operations to give us the first and second elements.</p>
+
+<dl>
+	<dt><code>first(p) = &Union; &Intersection; p</code></dt>
+	<dd>Breaking this down: the set of all x's such that for every element of the Y of the set P, x is an element of Y. Since the "first" element of the tuple will be in both sets, that is the only value that can satisfy this predicate.</dd>
+	<dt><code>second(p) = &Union; { x &Element; &Union; p &VerticalBar; &Union; p &NotEqual; &Intersection; p &RightArrow; x &NotElement; &Intersection; p }</code></dt>
+	<dd></dd>
+</dl>
+
+<p>This "technique" can be extended for any arbitrary "n"-tuples. In true mathematician style I will leave this as an exercise to the reader.</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Programming and sets</h1>
+<p>Recall the subset notation previously. In Python we could write that as this code:
+<pre><code class="python">Z = range(4294967295) # we'll pretend the maximum value for a 32-bit integer is "all integers"
+Evens = [ x for x in Z if x % 2 == 0 ]</code></pre>
+Those familiar with Python will recall this is called a "list comprehension". The general idea is to apply some bit of code to each element of a list to determine if the element is in the list.</p>
+
+<p>In (PostgreSQL) SQL we could write:
+<pre><code class="sql">SELECT x
+    FROM (SELECT generate_series(0, 4294967295) AS x) Z
+    WHERE x % 2 = 0;</code></pre>
+Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so this is probably not too surprising.</p>
+
+<p>In Haskell we could write:
+<pre><code class="haskell">Evens = [x | x <- [1..], mod x 2 == 0 ]</code></pre></p>
+
+<p>These examples were picked intentionally because mathematical notation, language, and concepts permeate many programming languages. But it goes even deeper than that.</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Functions and Relations</h1>
+<p>Now that we know about sets and n-tuples, we can talk about <em>relations</em>. In mathematics, a relation is quite simply a set of n-tuples, where n is the same for every element of the set.</p>
+<table>
+<tr><td><code>(1, 2, 4)</code></td></tr>
+<tr><td><code>(2, 4, 4)</code></td></tr>
+<tr><td><code>(6, 4, 5)</code></td></tr>
+<tr><td><code>(4, 2, 1)</code></td></tr>
+<tr><td><code>(7, 9, 10)</code></td></tr>
+</table>
+
+<p>A <em>function</em> is a relation in which one element of the n-tuple is denoted the "key" and the rest of the tuple is denoted as the "value". The set of values that comprise the key's are called the <em>domain</em>, the set of the rest of the values from the n-tuple is called the <em>codomain</em>. Or to use another idea, the <em>domain</em> comes from one set, and the <em>codomain</em> comes from another set, and the relation/function is comprised of a subset of the cross product of the two sets.</p>
+
+<h2>Combining Relations</h2>
+<p>Now that we have some definitions, let's talk about combining relations (or functions). Given two relations that consist of ordered pairs, <code>F</code>(on the sets <code>Y &Cross; Z</code>) and <code>G</code>(on the sets <code>X &Cross; Y</code>), let's define a <code>combine</code>. Create a new set of ordered pairs, matching up the second element(using the <code>second</code> operation we defined on ordered pairs) of the pairs in G with the first element of the ordered pairs in F. Or:
+<pre><code>combine(F,G) = { (x,z) &Element; X &Cross; Z &VerticalBar; &Exists; y &Element; Y : (x,y) &Element; G &and; (y,z) &Element; F }</code></pre></p>
+
+<p>We can extend this to arbitrary n-tuples, but the idea is the same. In fact, we can realize that <code>combine</code> is simply the function composition operator we discussed earlier.</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Relational Algebra</h1>
+<p>Many programmers have probably heard that SQL is based on something called the <em>relational algebra</em>. It's probably worth pointing out now that the mathematical definition of a <em>relation</em> is identical to the SQL definition. This is not an accident. In fact, SQL also has the function composition operator: <code>JOIN</code>:</p>
+<pre><code class="sql">SELECT x,z
+&nbsp;&nbsp;&nbsp;&nbsp;FROM F
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JOIN G
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ON (F.y = G.y);</code></pre>
+
+<p>Cross products in SQL are simply the <code>CROSS JOIN</code> operator. And of course, since relations are just sets of n-tuples, we have all the set operators available too, set unions(<code>UNION</code>):
+<pre><code class="sql">(SELECT * FROM F) UNION (SELECT * FROM G)</code></pre></p>
+<p>Set intersection(<code>INTERSECT</code>):
+<pre><code class="sql">(SELECT * FROM F) INTERSECT (SELECT * FROM G)</code></pre></p>
+<p>and set difference(<code>EXCEPT</code>):
+<pre><code class="sql">(SELECT * FROM F) EXCEPT (SELECT * FROM G)</code></pre></p>
+<p>We even have the <code>&Element;</code> notation in the form of <code>IN</code>:
+<pre><code class="sql">SELECT * FROM F WHERE (x,y) IN (SELECT * FROM G);</code></pre></p>
+</div>
+
+
+
+<div class="slide">
+<h1>Pure Functions</h1>
+<p>Up to this point, I have been discussing <em>mathematical functions and relations</em>. However, programmers often deal with functions that involve some notion of "state", and thus, often have "functions" that have some internal state. A pure function is one in that, when provided with the same parameters always maps to the same value.</p>
+
+<p>One reason to prefer stateless or pure functions is that state transitions cause a combinatorial "explosion" in terms of possibilities. In a system with 2 states, we have to consider the transitions from state 1 to 2, and 2 to 1. However, adding a single state to this, increases the possibilities to 6 (1 to 2, 1 to 3, 2 to 1, 2 to 3, 3 to 1, 3 to 2), and so on.</p>
+
+<p>However, we can turn all functions with "state" into pure functions by simply adding a parameter whose value is the "state" of the system. And the value "returned" by the function will be the new state of the system. This transformation is called <em>world passing style</em>.</p>
+
+<p>One interesting observation is that this turns a function of a single parameter into a binary operation. Since these functions are "pure": <code>op(a, b)</code> will always result in the same value. So now a sequence of the same operation can be written in the following way: <code>op(op(a,b), c)</code> where <code>b</code> and <code>c</code> are inputs, and <code>a</code> is initial state.</p>
+
+<p>Considering that we are discussing algebraic operations, it would be interesting to contemplate whether or not these "world passing style" functions should be associative. In other words, should it be the case that: <code>op(op(a, b), c) = op(a, op(b, c))</code>. (This is an exercise left for the reader, although we'll come back to this later.)</p>
+</div>
+
+<div class="slide">
+<h1>Transitivity</h1>
+
+</div>
+
+
+<div class="slide">
+<h1>Abstract Algebra</h1>
+<p>Elementary algebra looks at symbol manipulation involving operations over numbers. Abstract algebra is the branch of the mathematics that looks at generalized versions of these ideas over different structures, and identifies recurring patterns. From a programming perspective, this is a bit like "duck typing". The general forms(groups, rings, fields, lattices) are identified by the basic properties they have. Once an object is identified with these rules, one can reason about the abstract forms with little regard for the underlying specific instance.</p>
+</div>
+
+<div class="slide">
+</div>
+
+<div>
+Fixed points
+Morphisms
+Maps
+Bijective
+Injective
+Equivalence Classes
+Lattices
+Domains
+Euclid's Algorithm
+
+http://www.stephendiehl.com/posts/abstraction.html?HN_20160519
+
+https://en.wikipedia.org/wiki/Morphism
+https://en.wikipedia.org/wiki/Group_homomorphism
+https://en.wikipedia.org/wiki/Map_(mathematics)
+https://simple.wikipedia.org/wiki/Relation_(mathematics)
+http://www.regentsprep.org/regents/math/algtrig/atp5/lfunction.htm
+https://en.wikipedia.org/wiki/Ordered_pair
+
+https://en.wikipedia.org/wiki/Monoid
+https://en.wikipedia.org/wiki/Semigroup
+https://en.wikipedia.org/wiki/Commutative_property#Noncommutative_operations_in_mathematics
+https://en.wikipedia.org/wiki/Group_(mathematics)
+https://en.wikipedia.org/wiki/Ring_(mathematics)
+http://mathworld.wolfram.com/EquivalenceClass.html
+
+
+https://en.wikipedia.org/wiki/Intuitionistic_type_theory
+https://en.wikipedia.org/wiki/Homotopy_type_theory
+https://homotopytypetheory.org/blog/
+https://en.wikipedia.org/wiki/Universal_algebra
+https://en.wikipedia.org/wiki/Abstract_algebra
+https://en.wikipedia.org/wiki/List_of_abstract_algebra_topics
+</div>
+
+
+
+<div class="slide">
+<h1>References</h1>
+<ul>
+<li><a href="http://worrydream.com/refs/Backus-CanProgrammingBeLiberated.pdf">Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</a> John Backus, 1977, Turing Award.</li>
+<li><a href="https://www.cs.umd.edu/class/spring2003/cmsc838p/Design/criteria.pdf">On the criteria to be used in decomposing systems into modules</a> - D. L. Parnas, 1979.</li>
+</ul>
+</div>
+
+</body>
+</html>
