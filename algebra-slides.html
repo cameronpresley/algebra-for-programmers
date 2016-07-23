@@ -248,7 +248,124 @@ Drain(Drain@1f2f0ce9): 4, 11</pre>
 
 <div class="slide">
 <h1>A second act</h1>
-<p>Now, this is a group of functional programmers, so clearly the mistake is that I used Java. So let's rewrite this in Erlang.</p>
+<p>Now, this is a group of functional programmers, so clearly the mistake is that I used Java. So let's rewrite this in Erlang. So here's a counter and a drain implementation, along with two functions to start single and double drain versions:</p>
+<pre><code class="erlang">-module(threads).
+-export([counter/1, drain/2, startOneDrain/0, startTwoDrains/0]).
+
+counter(X, Lock_PID) ->
+	receive
+		{ counter_set, NewX, Lock_PID } ->
+			io:format("counter ~w: ~w~n", [ self(), NewX ]),
+			counter(NewX, Lock_PID);
+		{ counter_inc, Lock_PID } ->
+			io:format("counter ~w: ~w~n", [ self(), X + 1 ]),
+			Lock_PID ! { counter_inc, X + 1, self() },
+			counter(X + 1, Lock_PID);
+		{ counter_dec, Lock_PID } ->
+			io:format("counter ~w: ~w~n", [ self(), X - 1 ]),
+			Lock_PID ! { counter_dec, X - 1, self() },
+			counter(X - 1, Lock_PID);
+		{ counter_unlock, Lock_PID } ->
+			io:format("counter ~w UNLOCKED ~w~n", [ self(), Lock_PID ]),
+			counter(X);
+		_ ->
+			counter(X, Lock_PID)
+	end.
+
+counter(X) ->
+	receive
+		{ counter_lock, Lock_PID } ->
+			io:format("counter ~w locking for ~w: ~w~n", [ self(), Lock_PID, X ]),
+			Lock_PID ! { ok, X, self() },
+			counter(X, Lock_PID);
+		_ ->
+			counter(X)
+	end.
+
+
+drain(done) ->
+	io:format("Drain finished. ~w~n.", [ self() ]).
+
+drain_sink_ok(Source, Sink) ->
+	receive
+		{ counter_inc, _, Sink } ->
+			Sink ! { counter_unlock, self() },
+			Source ! { counter_unlock, self() },
+			drain(Source, Sink);
+		_ ->
+			drain_sink_ok(Source, Sink)
+	end.
+
+drain_wait_for_sink(Source, Sink, X) ->
+	receive
+		{ ok, Y, Sink } ->
+			Source ! { counter_dec, self() },
+			Sink ! { counter_inc, self() },
+			io:format("Draining ~w: ~w to ~w~n", [self(), X, Y]),
+			drain_sink_ok(Source, Sink);
+		_ ->
+			drain_wait_for_sink(Source, Sink, X)
+	end.
+
+drain(Source, Sink) ->
+	Source ! { counter_lock, self() },
+	receive
+		{ ok, 0, Source } ->
+			Source ! { counter_unlock, self() },
+			drain(done);
+		{ ok, X, Source } ->
+			Sink ! { counter_lock, self() },
+			drain_wait_for_sink(Source, Sink, X);
+		_ ->
+			drain(Source, Sink)
+	end.
+
+startOneDrain() ->
+	A = spawn(threads, counter, [5]),
+	B = spawn(threads, counter, [10]),
+	spawn(threads, drain, [ A, B ]).
+
+startTwoDrains() ->
+	A = spawn(threads, counter, [5]),
+	B = spawn(threads, counter, [10]),
+	spawn(threads, drain, [ A, B ]),
+	spawn(threads, drain, [ B, A ]).</code></pre>
+</div>
+
+
+<div class="slide">
+	<h1>Erlang to the rescue!?</h1>
+	<p>So when we start up the Erlang interpreter and compile our module (<code>erl</code> followed by <code>c(threads).</code>) and run the single drain version(do a <code>threads:startOneDrain().</code>), we get something like this:
+<pre>1> c(threads).
+{ok,threads}
+2> threads:startOneDrain().
+counter &lt;0.40.0> locking for &lt;0.42.0>: 5
+&lt;0.42.0>
+counter &lt;0.41.0> locking for &lt;0.42.0>: 10
+Draining &lt;0.42.0>: 5 to 10
+counter &lt;0.40.0>: 4
+counter &lt;0.41.0>: 11
+counter &lt;0.41.0> UNLOCKED &lt;0.42.0>
+counter &lt;0.40.0> UNLOCKED &lt;0.42.0>
+counter &lt;0.40.0> locking for &lt;0.42.0>: 4
+counter &lt;0.41.0> locking for &lt;0.42.0>: 11
+# omitted ...
+Draining &lt;0.42.0>: 1 to 14
+counter &lt;0.40.0>: 0
+counter &lt;0.41.0>: 15
+counter &lt;0.41.0> UNLOCKED &lt;0.42.0>
+counter &lt;0.40.0> UNLOCKED &lt;0.42.0>
+counter &lt;0.40.0> locking for &lt;0.42.0>: 0
+Drain finished. &lt;0.42.0>
+counter &lt;0.40.0> UNLOCKED &lt;0.42.0></pre>
+
+<p>Great! So let's try the two drain version! <code>threads:startTwoDrains().</code>, and we get...</p>
+<pre>3> threads:startTwoDrains().
+counter &lt;0.45.0> locking for &lt;0.47.0>: 5
+counter &lt;0.46.0> locking for &lt;0.48.0>: 10
+&lt;0.48.0>
+4></pre>
+<p>Hey... wait a minute... (or 10 years... it's all the same). Erlang's superior actor concurrency, non-shared state, functional style did nothing to prevent me from duplicating the same deadlock bug my Java version had...</p>
 </div>
 
 
@@ -258,9 +375,24 @@ Drain(Drain@1f2f0ce9): 4, 11</pre>
 <p>Multithreaded programs have an interesting property. We can write correct multithreaded programs, and then combine them with other multithreaded programs, that are also correct, and there is no guarantee that larger combined program will be correct. This goes way beyond mutable state. And while some programs assign numerical values to locks and use the ordering imposed by the integer values on locks to have a canonical locking order, there are still other bugs that regularly occur. Many result in security issues.</p>
 
 <p>I have a claim.</p>
-<h2>Mulithreaded programming is hard because there is no composition operator that preserves correctness when combining two correct multithreaded programs.</h2>
+<h1>Mulithreaded programming is hard because there is no composition operator that preserves correctness when combining two correct multithreaded programs.</h1>
 </div>
 
+
+<div class="slide">
+<h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
+</div>
+
+<div class="slide">
+<h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
+<h1>Answer: Yes, that was.</h1>
+</div>
+
+<div class="slide">
+<h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
+<h1>Answer: Yes, that was.</h1>
+<h1>Question: It still didn't work though?</h1>
+</div>
 
 
 <div class="slide">
