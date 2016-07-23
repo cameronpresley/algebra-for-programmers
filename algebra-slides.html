@@ -35,8 +35,9 @@
 <h1>Goals of this presentation</h1>
 <ul>
 	<li>Explain terminology frequently used in discussion of functional programming, in particular terms from algebra and (some) terms of category theory.</li>
-	<li>Provide a review topics in elementary algebra(i.e. what is typically covered in high school algebra classes).</li>
+	<li>Provide a review of topics in elementary algebra(i.e. what is typically covered in high school algebra classes).</li>
 	<li>Connect algebraic topics to their appearance in functional programming.</li>
+	<li>Demonstrate that building programs out of smaller programs using reliable combining operations is "doing algebra". (Or rather, algebra studies primitives that can help us study how to do this better.)</li>
 	<li>Try to help alleviate "jargon overload" to people new to functional programming...</li>
 </ul>
 <blockquote>1990 - A committee formed by Simon Peyton-Jones, Paul Hudak, Philip Wadler, Ashton Kutcher, and People for the Ethical Treatment of Animals creates Haskell, a pure, non-strict, functional language. Haskell gets some resistance due to the complexity of using monads to control side effects. Wadler tries to appease critics by explaining that <em>"a monad is a monoid in the category of endofunctors, what's the problem?"</em> - from <a href="http://james-iry.blogspot.com/2009/05/brief-incomplete-and-mostly-wrong.html">A Brief, Incomplete, and Mostly Wrong History of Programming Languages</a></blockquote>
@@ -282,7 +283,6 @@ counter(X) ->
 			counter(X)
 	end.
 
-
 drain(done) ->
 	io:format("Drain finished. ~w~n.", [ self() ]).
 
@@ -376,6 +376,8 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 
 <p>I have a claim.</p>
 <h1>Mulithreaded programming is hard because there is no composition operator that preserves correctness when combining two correct multithreaded programs.</h1>
+
+<p>Actor concurrency, with "shared nothing" memory, is a great and useful thing, but it you can still write programs using actors that can not be combined without bugs(like deadlock, livelock, and friends).</p>
 </div>
 
 
@@ -393,6 +395,70 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 <h1>Answer: Yes, that was.</h1>
 <h1>Question: It still didn't work though?</h1>
 </div>
+
+<div class="slide">
+<h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
+<h1>Answer: Yes, that was.</h1>
+<h1>Question: It still didn't work though?</h1>
+<h1>Answer:</h1>
+<p>That's because our function that performed the composition lacked a useful property. It didn't "preserve correctness". Ideally, a composition operator(aka function) will preserve some "invariant". However, we can define different invariants that prove different things.</p>
+
+<p>In fact, one of the insights functional programming has helpd bring to the world was the idea that composition should preserve some type of "correctness property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
+</div>
+
+
+<div class="slide">
+<h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
+<h1>Answer: Yes, that was.</h1>
+<h1>Question: It still didn't work though?</h1>
+<h1>Answer:</h1>
+<p>That's because our function that performed the composition lacked a useful property. It didn't "preserve correctness". Ideally, a composition operator(aka function) will preserve some "invariant". However, we can define different invariants that prove different things.</p>
+
+<p>In fact, one of the insights functional programming has helpd bring to the world was the idea that composition should preserve some type of "correctness property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
+<h1>Question: My head is hurting again...</h1>
+</div>
+
+<div class="slide">
+<h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
+<h1>Answer: Yes, that was.</h1>
+<h1>Question: It still didn't work though?</h1>
+<h1>Answer:</h1>
+<p>That's because our function that performed the composition lacked a useful property. It didn't "preserve correctness". Ideally, a composition operator(aka function) will preserve some "invariant". However, we can define different invariants that prove different things.</p>
+
+<p>In fact, one of the insights functional programming has helpd bring to the world was the idea that composition should preserve some type of "correctness property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
+<h1>Question: My head is hurting again...</h1>
+<h1>Answer: Let's rollback...</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>Threads, this time with commitment.</h1>
+TO DO, finish Haskell STM version, possibly SQL version too.
+</div>
+
+
+
+<div class="slide">
+<h1>Question: Okay, so that STM stuff is neat. But I don't write a lot of parallel code.</h1>
+</div>
+
+<div class="slide">
+<h1>Question: Okay, so that STM stuff is neat. But I don't write a lot of parallel code.</h1>
+<h1>Answer: Composition shows up everywhere, let's look at some loops.</h1>
+</div>
+
+
+<div class="slide">
+<h1>Question: Okay, so that STM stuff is neat. But I don't write a lot of parallel code.</h1>
+<h1>Answer: Composition shows up everywhere, let's look at some simple loops.</h1>
+<h1>Question: "Simple"? You keep using that word, I do not think it means what you think it means.</h1>
+</div>
+
+<div class="slide">
+
+</div>
+
 
 
 <div class="slide">
@@ -457,7 +523,7 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 	<dt><code>&forall;</code></dt>
 	<dd>"Universal Quantification". When writing in English you can substitute the phrase <em>for all</em> or <em>for every</em>. It expresses the notion that some statemant is true "for every" value. While it is easy to compare this to "looping" in programming, it is probably more accurate to compare "for all" statements to "loop invariants", i.e. something that will always be "true".</dd>
 	<dt><code>&Exists;</code></dt>
-	<dd>"Existential Quantification". When writing this in English the phrase <em>there exists</em>, <em>there is</em>, or <em>there are</em> should be used. It can be thought of as implying a search for value that would be successful. There is a value that wouls satisfy some statement.</dd>
+	<dd>"Existential Quantification". When writing this in English the phrase <em>there exists</em>, <em>there is</em>, or <em>there are</em> should be used. It can be thought of as implying a search for value that would be successful. There is a value that would satisfy some statement.</dd>
 	<dt><code>&Element;</code></dt>
 	<dd>When reading this symbol read it as "element of", "in".</dd>
 	<dt><code>&top;</code></dt>
@@ -481,7 +547,7 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 
 <div class="slide">
 <h1>Sets</h1>
-<p>In modern mathematics, sets have been formalized, but the idea is intuitive: a set of <em>things</em> has a notion of membership, a thing either is or is not a member of a set. There is no notion of order though. There is no "first" member of a set. However, we can frequently define sets (or subsets of sets) using some "predicate" to determine membership. For instance the "the set of all numbers evenly divisible by 2" is a set. Sets are often written a list of things in between { and }, so <code>{ 1, 2, 3, 4 }</code> would be a set. The set with nothing in it is called the <em>empty set</em>, and it is often written: <code>&emptyset;</code>, however it can also be written <code>{}</code>. "Predicates" are mathematical statements whose values are either true or false. Sets that are defined in terms of another set and "predicates" are often written in a mathematical notation like so:
+<p>In modern mathematics, sets have been formalized, but the idea is intuitive: a set of <em>things</em> has a notion of membership, a thing either is or is not a member of a set. There is no notion of order though. There is no "first" member of a set. However, we can frequently define sets (or subsets of sets) using some "predicate" to determine membership. For instance the "the set of all numbers evenly divisible by 2" is a set. Sets are often written as a list of things in between { and }, so <code>{ 1, 2, 3, 4 }</code> would be a set. The set with nothing in it is called the <em>empty set</em>, and it is often written: <code>&emptyset;</code>, however it can also be written <code>{}</code>. "Predicates" are mathematical statements whose values are either true or false. Sets that are defined in terms of another set and "predicates" are often written in a mathematical notation like so:
 <code>Evens = { x &Element; &integers; &VerticalBar; x mod 2 = 0 }</code>.
 Which if read in "English" says: <em>"The set 'Evens' is equal to the set x's in the Integers such that x modulo 2 is equal to 0."</em></p>
 
@@ -566,11 +632,12 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 
 <div class="slide">
 <h1>Relational Algebra</h1>
-<p>Many programmers have probably heard that SQL is based on something called the <em>relational algebra</em>. It's probably worth pointing out now that the mathematical definition of a <em>relation</em> is identical to the SQL definition. This is not an accident. In fact, SQL also has the function composition operator: <code>JOIN</code>:</p>
+<p>Many programmers have probably heard that SQL is based on something called the <em>relational algebra</em>. It's probably worth pointing out now that the mathematical definition of a <em>relation</em> is identical to the SQL definition. This is not an accident. In fact, SQL also has the function composition operator: <code>JOIN</code>:
 <pre><code class="sql">SELECT x,z
 &nbsp;&nbsp;&nbsp;&nbsp;FROM F
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JOIN G
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ON (F.y = G.y);</code></pre>
+(minor footnote: this only if the join condition is a simple equality... join is actually more flexible than function composition, of course, it is in fact a composition operator for creating new relations out of other relations... and that's what counts.)</p>
 
 <p>Cross products in SQL are simply the <code>CROSS JOIN</code> operator. And of course, since relations are just sets of n-tuples, we have all the set operators available too, set unions(<code>UNION</code>):
 <pre><code class="sql">(SELECT * FROM F) UNION (SELECT * FROM G)</code></pre></p>
@@ -654,6 +721,9 @@ https://en.wikipedia.org/wiki/List_of_abstract_algebra_topics
 <ul>
 <li><a href="http://worrydream.com/refs/Backus-CanProgrammingBeLiberated.pdf">Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</a> John Backus, 1977, Turing Award.</li>
 <li><a href="https://www.cs.umd.edu/class/spring2003/cmsc838p/Design/criteria.pdf">On the criteria to be used in decomposing systems into modules</a> - D. L. Parnas, 1979.</li>
+<li><a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Beyond Locks: Software Transactional Memory</a></li>
+<li><a href="http://research.microsoft.com/en-us/um/people/simonpj/papers/stm/stm.pdf">Composable Memory Transactions</a></li>
+<li><a href="http://www.usingcsp.com/cspbook.pdf">Communicating Sequential Processes</a>, C.A.R. Hoare</a></li>
 </ul>
 </div>
 
