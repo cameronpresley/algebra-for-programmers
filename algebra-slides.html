@@ -372,7 +372,7 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 
 <div class="slide">
 <h1>Composing threads</h1>
-<p>Multithreaded programs have an interesting property. We can write correct multithreaded programs, and then combine them with other multithreaded programs, that are also correct, and there is no guarantee that larger combined program will be correct. This goes way beyond mutable state. And while some programs assign numerical values to locks and use the ordering imposed by the integer values on locks to have a canonical locking order, there are still other bugs that regularly occur. Many result in security issues.</p>
+<p>Multithreaded programs have an interesting property. We can write correct multithreaded programs, and then combine them with other multithreaded programs, that are also correct, and there is no guarantee that larger combined program will be correct. This goes way beyond mutable state. And while some programs assign numerical values to locks and use the ordering imposed by the integer values on locks to have a canonical locking order, there are still other bugs that regularly occur. Many result in security issues, for instance data races in authentication and e-commerce systems in nearly every major web service have lead to exploitable bugs that resulted in users being able to impersonate other users, double spend transactions, and much more.</p>
 
 <p>I have a claim.</p>
 <h1>Mulithreaded programming is hard because there is no composition operator that preserves correctness when combining two correct multithreaded programs.</h1>
@@ -434,7 +434,94 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 
 <div class="slide">
 <h1>Threads, this time with commitment.</h1>
-TO DO, finish Haskell STM version, possibly SQL version too.
+<p>The idea of Software Transactional Memory(STM) was worked out in the early 2000's by Simon Peyton Jones, Tim Harris, Maurice Herlihy, and Simon Marlow and implemented as a library in Haskell, and then in many other languages. It works much like the idea of database transactions: a block of code is executed atomically, and like a transaction, it either commits or fails(and be retried until it eventually succeeds). It is composable and eliminates data races, deadlocks, and other concurrency bugs. It is not without it's critics (and implementation difficulties, see this <a href="http://joeduffyblog.com/2010/01/03/a-brief-retrospective-on-transactional-memory/">piece</a> by Joe Duffy about STM in .Net.</p>
+
+<p>In Haskell, STM is implemented in the <code>Control.Concurrent.STM</code> package, and consider this reimplementation of draining from one counter to another:</p>
+<pre><code class="haskell">import Control.Concurrent
+import Control.Concurrent.STM
+import Control.Monad
+
+moveOne 0 to source sink = return ()
+moveOne from to source sink = do
+    writeTVar source (from - 1)
+    writeTVar sink (to + 1)
+
+
+drainOne source sink = do
+    from &lt;- readTVar source
+    to &lt;- readTVar sink
+    moveOne from to source sink
+
+drain name source sink lock = do
+    from &lt;- atomically $ readTVar source
+    to &lt;- atomically $ readTVar sink
+    withMVar lock $ \_ -> putStrLn $ "draining " ++ name ++ " " ++ (show from) ++ ", " ++ (show to)
+    if from > 0
+        then
+            (atomically $ (drainOne source sink)) >> milliSleep 1 >> (drain name source sink lock)
+        else return ()</code></pre>
+</div>
+
+<div class="slide">
+<h1>Software Transactional Memory drains</h1>
+<p>For a single drain, this is the main:
+<pre><code class="haskell">oneDrain lock = do
+    ctr1 &lt;- atomically $ newTVar 5
+    ctr2 &lt;- atomically $ newTVar 10
+    forkIO (do
+        drain "a" ctr1 ctr2 lock)
+
+main = do
+    lock &lt;- newMVar ()
+    oneDrain lock
+    milliSleep 60</code></pre>
+And here is the output:
+<pre>draining a 5, 10
+draining a 4, 11
+draining a 3, 12
+draining a 2, 13
+draining a 1, 14
+draining a 0, 15</pre></p>
+</div>
+
+<div class="slide">
+<h1>Software Transactional Memory drains</h1>
+<p>Now two drains:
+<pre><code class="haskell">twoDrains lock = do
+    ctr1 &lt;- atomically $ newTVar 5
+    ctr2 &lt;- atomically $ newTVar 10
+    forkIO (do
+        drain "a" ctr1 ctr2 lock)
+    forkIO (do
+        drain "b" ctr2 ctr1 lock)
+
+main = do
+    lock &lt;- newMVar ()
+    twoDrains lock
+    milliSleep 60</code></pre>
+And here is the output:
+<pre>draining b 10, 5
+draining a 5, 10
+draining b 10, 5
+draining a 5, 10
+draining b 11, 4
+draining a 5, 10
+draining b 10, 5
+draining a 5, 10
+draining b 10, 5
+draining b 10, 5
+draining a 5, 10
+draining b 10, 5
+# many lines of output omitted
+draining a 5, 10
+draining b 10, 5
+draining a 5, 10
+draining a 5, 10
+draining b 10, 5
+draining a 5, 10
+ghc: sendWakeup: invalid argument (Bad file descriptor)</pre></p>
+
+<p>So wait, this will just keep going like this no matter how long we delay? Each drain is trying to completely 0 the opposite counter, since they are both moving fairly quickly, and working against each other, neither is going to win (since now they aren't deadlocking and livelocking each other). However, I did have a lock in this, which you might argue is helping me(to be fair to me, locks didn't help me in the other two versions). I did have a version with no lock which behaved the same, except, since both threads were writing logging information to <code>stdout</code>, I got a jumbled mess of interleaved messages. I added the lock so that <code>putStrLn</code> would not jumble the status messages. After all, how else was I going to get output to paste into a slide? Feel free to remove the lock at home. Or, perhaps more fun, refactor the program to use STM to send logging messages to another thread that prints out the messages for us one at a time...</p>
 </div>
 
 
@@ -445,7 +532,7 @@ TO DO, finish Haskell STM version, possibly SQL version too.
 
 <div class="slide">
 <h1>Question: Okay, so that STM stuff is neat. But I don't write a lot of parallel code.</h1>
-<h1>Answer: Composition shows up everywhere, let's look at some loops.</h1>
+<h1>Answer: Composition shows up everywhere, let's look at some simple loops.</h1>
 </div>
 
 
@@ -519,6 +606,8 @@ TO DO, finish Haskell STM version, possibly SQL version too.
 <h1>Mathematical and Logic symbols</h1>
 <p>While the previous discussion of elementary algebra should have been a "review" in some sense, this is probably new material for many people. When reading mathematical texts, especially ones involving logic, there are many symbols that are used in a specific, formal way. However, many of these symbols can be "read" as phrases/words in English that should make sense to many programmers.</p>
 
+<p><strong>Note:</strong> This list is quite long and yet, it's not comprehensive. These symbols came from mathematical literature, and they also show up in a lot of functional programming literature, papers, and references. These symbols mostly have straightforward meanings, but the process of acclimating to their usage can take some time. It's a lot like reading a Perl program. However, unlike Perl, these concepts can be used to increase the clarity of your thinking.</p>
+
 <dl>
 	<dt><code>&forall;</code></dt>
 	<dd>"Universal Quantification". When writing in English you can substitute the phrase <em>for all</em> or <em>for every</em>. It expresses the notion that some statemant is true "for every" value. While it is easy to compare this to "looping" in programming, it is probably more accurate to compare "for all" statements to "loop invariants", i.e. something that will always be "true".</dd>
@@ -549,7 +638,7 @@ TO DO, finish Haskell STM version, possibly SQL version too.
 <h1>Sets</h1>
 <p>In modern mathematics, sets have been formalized, but the idea is intuitive: a set of <em>things</em> has a notion of membership, a thing either is or is not a member of a set. There is no notion of order though. There is no "first" member of a set. However, we can frequently define sets (or subsets of sets) using some "predicate" to determine membership. For instance the "the set of all numbers evenly divisible by 2" is a set. Sets are often written as a list of things in between { and }, so <code>{ 1, 2, 3, 4 }</code> would be a set. The set with nothing in it is called the <em>empty set</em>, and it is often written: <code>&emptyset;</code>, however it can also be written <code>{}</code>. "Predicates" are mathematical statements whose values are either true or false. Sets that are defined in terms of another set and "predicates" are often written in a mathematical notation like so:
 <code>Evens = { x &Element; &integers; &VerticalBar; x mod 2 = 0 }</code>.
-Which if read in "English" says: <em>"The set 'Evens' is equal to the set x's in the Integers such that x modulo 2 is equal to 0."</em></p>
+Which if read in "English" says: <em>"The set 'Evens' is equal to the set x's in the Integers (&integers; is used to represent "the set of all integers") such that x modulo 2 is equal to 0."</em></p>
 
 <h2>Operations on Sets</h2>
 <dl>
@@ -601,7 +690,7 @@ Those familiar with Python will recall this is called a "list comprehension". Th
 Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so this is probably not too surprising.</p>
 
 <p>In Haskell we could write:
-<pre><code class="haskell">Evens = [x | x <- [1..], mod x 2 == 0 ]</code></pre></p>
+<pre><code class="haskell">Evens = [x | x &lt;- [1..], mod x 2 == 0 ]</code></pre></p>
 
 <p>These examples were picked intentionally because mathematical notation, language, and concepts permeate many programming languages. But it goes even deeper than that.</p>
 </div>
@@ -661,7 +750,7 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 
 <p>One interesting observation is that this turns a function of a single parameter into a binary operation. Since these functions are "pure": <code>op(a, b)</code> will always result in the same value. So now a sequence of the same operation can be written in the following way: <code>op(op(a,b), c)</code> where <code>b</code> and <code>c</code> are inputs, and <code>a</code> is initial state.</p>
 
-<p>Considering that we are discussing algebraic operations, it would be interesting to contemplate whether or not these "world passing style" functions should be associative. In other words, should it be the case that: <code>op(op(a, b), c) = op(a, op(b, c))</code>. (This is an exercise left for the reader, although we'll come back to this later.)</p>
+<p>Considering that we are discussing algebraic operations, it would be interesting to contemplate whether or not these "world passing style" functions should be associative. In other words, should it be the case that: <code>op(op(a, b), c) = op(a, op(b, c))</code>. Or rather... what would it take to make it associative? (This is an exercise left for the reader, although we'll come back to this later.)</p>
 </div>
 
 <div class="slide">
@@ -676,6 +765,119 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 </div>
 
 <div class="slide">
+</div>
+
+<div class="slide">
+<h1>Category Theory</h1>
+
+<p>Category Theory is often brought up as a bogeyman. So first, I want to bring up some historical context. It was originally developed in the 1940's and 1950's by Saunders Mac Lane in the study of Algebraic Topology. Topology is itself considered an abstract field devoted to studying connectivity in shapes and surfaces in a very general sense, asking about whether two things are the "same" in an abstract, stretchy, deformable way. Algebraic topology classifies topological spaces and asks questions about mapping families of topological spaces into algebraic concepts like groups, monoids and so on...</p>
+
+<h2>Wat?</h2>
+<p>In the words of my advisor, who was himself an Algebraic topologist, Category Theory is <em>Generalized Abstract Nonsense</em>.</p>
+
+<h2>And yet...</h2>
+<p>Classical mathematics uses classical logic and axioms on sets to describe and model every thing else in mathematics. Sets themselves are left undefined, and instead, stated as an entity that satisifes a collection of basic facts(called axioms). This is why defining functions, tuples, topologies can all be mapped down to set theory.</p>
+
+<p>However, this is not the only way to do math. Category theory leaves functions (called arrows or maps) as the undefined entity, and builds models of mathematical ideas in terms of functions rather than sets. In many textbooks, one of the first categories introduced is the category <code>Set</code>, which of course, is defined in terms of functions...</p>
+
+<p>... and as programmers, we talk about programs in terms of functions. Building models of reasoning about programs in terms of Category Theory turns out to be a natural fit in many cases. Also, as a detour from modern classical mathematics (which itself only dates back to the work of Cantor, Russell, Frege, G&ouml;del, Turing, Church, and others around the turn of the 20th century), Category Theory is popular among Mathematicians who look at non-classical logics(like Intuitionistic logic) and constructivist approaches to mathematical logic.</p>
+
+<p>Another reason Category Theory is popular for some computer scientists is that it is very concerned with composition. The composition of functions, and of mathematical ideas in general. Ideas like composable mathematical proofs are popular to explore as well. Finding universal principles that apply to many "categorical objects" is also done. These ideas of finding invariants and ways to compose things have been at the heart of what I was trying to demonstrate with this talk: <em>How to build larger things from smaller things in ways that preserves the correctness/maintains the invariants, of the smaller things.</em>.</p>
+</div>
+
+<div class="slide">
+<h1>Monads</h1>
+
+<p>My talk has been on ideas from Abstract Algebra. Many of these ideas can (and are) reexpressed in terms of Category Theory to explain concepts from category theory like Monads: which as the (humorous) quote from the second slide observed are merely <em>a Monoid in the Category of the Endofunctors</em>. Even without exploring Category theory, you should now be able to see that this is probably talking about a monoid: an operator on a collection of items that is associative, and has an identity element from the collection, and that it the collection of objects, and that the objects are a higher order function that preserves identity and composition of functions, and the higher order function has the same domain and codomain.</p>
+
+<h2>Monad Laws</h2>
+<p>On the Haskell Wiki, you will see that Monad's must meet the requirements of the <a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a>. This matters because Haskell's type system is not capable of proving that the functions involved follow those rules. However, if you scroll down to the bottom of that page, you'll see the laws cast in terms of a function called <code>>=></code>(the Kleisli composition operator), and a function called <code>return</code>:
+<pre><code class="haskell">return >=> g &equiv; g
+f >=> return &equiv; f
+(f >=> g) >=> h &equiv; f >=> (g >=> h)</code></pre>
+Which, looks a lot like the definition of a monoid... mostly because it is the definition of a monoid.</p>
+
+<p>This talk was not meant to be a secret "monad tutorial". In fact, I don't want you to take away how to use or define monads. Instead...</p>
+</div>
+
+<div class="slide">
+<h1>Monads</h1>
+
+<p>My talk has been on ideas from Abstract Algebra. Many of these ideas can (and are) reexpressed in terms of Category Theory to explain concepts from category theory like Monads: which as the (humorous) quote from the second slide observed are merely <em>a Monoid in the Category of the Endofunctors</em>. Even without exploring Category theory, you should now be able to see that this is probably talking about a monoid: an operator on a collection of items that is associative, and has an identity element from the collection, and that it the collection of objects, and that the objects are a higher order function that preserves identity and composition of functions, and the higher order function has the same domain and codomain.</p>
+
+<h2>Monad Laws</h2>
+<p>On the Haskell Wiki, you will see that Monad's must meet the requirements of the <a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a>. This matters because Haskell's type system is not capable of proving that the functions involved follow those rules. However, if you scroll down to the bottom of that page, you'll see the laws cast in terms of a function called <code>>=></code>(the Kleisli composition operator), and a function called <code>return</code>:
+<pre><code class="haskell"> return >=> g &equiv; g
+f >=> return &equiv; f
+(f >=> g) >=> h &equiv; f >=> (g >=> h)</code></pre>
+Which, looks a lot like the definition of a monoid... mostly because it is the definition of a monoid.</p>
+
+<p>This talk was not meant to be a secret "monad tutorial". In fact, I don't want you to take away how to use or define monads. Instead...</p>
+
+<h1>Monads are about composition operators that preserve correctness.</h1>
+<p>In other words, when we define operators for composing things that preserve invariants or maintain some idea about correctness, it might be a monad. So it's yet another tool for talking about ways to compose things out of other things.</p>
+</div>
+
+
+<div class="slide">
+<h1>Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</h1>
+<p>In 1977 (almost 40 years ago), the ACM awarded John Backus(yes, the "B" in Backus-Naur Form(BNF), the John Backus who helped INVENT and define Fortran AND Algol. As part of that award he delivered a lecture and wrote an article. The title of that article was <em>Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</em> Below, I present a list of the section headings from this paper.</p>
+
+<ol>
+	<li>Conventional Programming Languages: Fat and Flabby</li>
+	<li>Models of Computing Systems
+		<ol>
+			<li>Criteria for Models
+				<ol>
+					<li>Foundations</li>
+					<li>History Sensitivity</li>
+					<li>Type of Semantics</li>
+					<li>Clarity and conceptual usefulness of programs</li>
+				</ol>
+			</li>
+			<li>Classification of Models
+				<ol>
+					<li>Simple operational models</li>
+					<li>Applicative models</li>
+					<li>Von Neumann models</li>
+				</ol>
+			</li>
+		</ol>
+	</li>
+	<li>Von Neumann Computers</li>
+	<li>Von Neumann Languages</li>
+	<li></li>
+	<li></li>
+	<li></li>
+	<li></li>
+	<li></li>
+	<li></li>
+	<li></li>
+	<li>The Algebra of Programs for FP Systems
+		<ol>
+			<li>Introduction</li>
+			<li>Some Laws of the Algebra of Programs</li>
+			<li>Example: Equivalence of Two Matrix Multiplication Programs</li>
+			<li>Expansion Theorems
+				<ol>
+					<li>Expansion</li>
+					<li>Linear Expansion</li>
+				</ol>
+			</li>
+			<li>A Recursion Theorem
+				<ol>
+					<li>Example: correctness proof of a reeursive factorial function.</li>
+				</ol>
+			</li>
+			<li>An Iteration Theorem
+				<ol>
+					<li>Example: Correctness proof for an iterative factorial function.</li>
+					<li>Example: proof of equivalence of two iterative programs.</li>
+				</ol>
+			</li>
+		</ol>
+	</li>
+</ol>
 </div>
 
 <div>
@@ -719,12 +921,23 @@ https://en.wikipedia.org/wiki/List_of_abstract_algebra_topics
 <div class="slide">
 <h1>References</h1>
 <ul>
-<li><a href="http://worrydream.com/refs/Backus-CanProgrammingBeLiberated.pdf">Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</a> John Backus, 1977, Turing Award.</li>
-<li><a href="https://www.cs.umd.edu/class/spring2003/cmsc838p/Design/criteria.pdf">On the criteria to be used in decomposing systems into modules</a> - D. L. Parnas, 1979.</li>
-<li><a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Beyond Locks: Software Transactional Memory</a></li>
-<li><a href="http://research.microsoft.com/en-us/um/people/simonpj/papers/stm/stm.pdf">Composable Memory Transactions</a></li>
-<li><a href="http://www.usingcsp.com/cspbook.pdf">Communicating Sequential Processes</a>, C.A.R. Hoare</a></li>
+	<li><a href="http://worrydream.com/refs/Backus-CanProgrammingBeLiberated.pdf">Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</a> John Backus, 1977, Turing Award.</li>
+	<li><a href="https://www.cs.umd.edu/class/spring2003/cmsc838p/Design/criteria.pdf">On the criteria to be used in decomposing systems into modules</a> - D. L. Parnas, 1979.</li>
 </ul>
+<h2>Concurrency and Parallelism</h2>
+<ul>
+	<li><a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Beyond Locks: Software Transactional Memory</a></li>
+	<li><a href="http://research.microsoft.com/en-us/um/people/simonpj/papers/stm/stm.pdf">Composable Memory Transactions</a></li>
+	<li><a href="http://www.usingcsp.com/cspbook.pdf">Communicating Sequential Processes</a>, C.A.R. Hoare</a></li>
+	<li><a href="http://yosefk.com/blog/parallelism-and-concurrency-need-different-tools.html">Parallelism and concurrency need different tools</a></li>
+</ul>
+<h2>Category Theory</h2>
+<ul>
+	<li><a href="https://mitpress.mit.edu/books/basic-category-theory-computer-scientists">Basic Category Theory for Computer Scientists</a>, Benjamin Pierce</li>
+	<li><a href="http://www.stephendiehl.com/posts/monads.html">Monads Made Difficult</a></li>
+	<li><a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a></li>
+</ul>
+
 </div>
 
 </body>
