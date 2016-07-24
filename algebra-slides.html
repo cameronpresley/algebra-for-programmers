@@ -446,7 +446,6 @@ moveOne from to source sink = do
     writeTVar source (from - 1)
     writeTVar sink (to + 1)
 
-
 drainOne source sink = do
     from &lt;- readTVar source
     to &lt;- readTVar sink
@@ -460,20 +459,18 @@ drain name source sink lock = do
         then
             (atomically $ (drainOne source sink)) >> milliSleep 1 >> (drain name source sink lock)
         else return ()</code></pre>
+
+milliSleep = threadDelay . (*) 1000
 </div>
 
 <div class="slide">
 <h1>Software Transactional Memory drains</h1>
 <p>For a single drain, this is the main:
-<pre><code class="haskell">oneDrain lock = do
+<pre><code class="haskell">main = do
+    lock &lt;- newMVar ()
     ctr1 &lt;- atomically $ newTVar 5
     ctr2 &lt;- atomically $ newTVar 10
-    forkIO (do
-        drain "a" ctr1 ctr2 lock)
-
-main = do
-    lock &lt;- newMVar ()
-    oneDrain lock
+    forkIO $ drain "a" ctr1 ctr2 lock
     milliSleep 60</code></pre>
 And here is the output:
 <pre>draining a 5, 10
@@ -487,17 +484,12 @@ draining a 0, 15</pre></p>
 <div class="slide">
 <h1>Software Transactional Memory drains</h1>
 <p>Now two drains:
-<pre><code class="haskell">twoDrains lock = do
+<pre><code class="haskell">main = do
+    lock &lt;- newMVar ()
     ctr1 &lt;- atomically $ newTVar 5
     ctr2 &lt;- atomically $ newTVar 10
-    forkIO (do
-        drain "a" ctr1 ctr2 lock)
-    forkIO (do
-        drain "b" ctr2 ctr1 lock)
-
-main = do
-    lock &lt;- newMVar ()
-    twoDrains lock
+    forkIO $ drain "a" ctr1 ctr2 lock
+    forkIO $ drain "b" ctr2 ctr1 lock
     milliSleep 60</code></pre>
 And here is the output:
 <pre>draining b 10, 5
@@ -542,8 +534,10 @@ ghc: sendWakeup: invalid argument (Bad file descriptor)</pre></p>
 <h1>Question: "Simple"? You keep using that word, I do not think it means what you think it means.</h1>
 </div>
 
-<div class="slide">
 
+
+<div class="slide">
+TO DO loop fusion map/fold/reduce examples
 </div>
 
 
@@ -762,9 +756,71 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 <div class="slide">
 <h1>Abstract Algebra</h1>
 <p>Elementary algebra looks at symbol manipulation involving operations over numbers. Abstract algebra is the branch of the mathematics that looks at generalized versions of these ideas over different structures, and identifies recurring patterns. From a programming perspective, this is a bit like "duck typing". The general forms(groups, rings, fields, lattices) are identified by the basic properties they have. Once an object is identified with these rules, one can reason about the abstract forms with little regard for the underlying specific instance.</p>
+
+<p>Another way of stating this: Abstract algebra is rarely concerned with concrete examples of algebraic structures, but with the structures themselves. Because of this, it focuses on universal properties, and invariants, that apply to these structures, and universal ways of combining, and composing these structures.</p>
 </div>
 
 <div class="slide">
+<h1>Abstract Algebra</h1>
+<p>Elementary algebra looks at symbol manipulation involving operations over numbers. Abstract algebra is the branch of the mathematics that looks at generalized versions of these ideas over different structures, and identifies recurring patterns. From a programming perspective, this is a bit like "duck typing". The general forms(groups, rings, fields, lattices) are identified by the basic properties they have. Once an object is identified with these rules, one can reason about the abstract forms with little regard for the underlying specific instance.</p>
+
+<p>Another way of stating this: Abstract algebra is rarely concerned with concrete examples of algebraic structures, but with the structures themselves. Because of this, it focuses on universal properties, and invariants, that apply to these structures, and universal ways of combining, and composing these structures.</p>
+<h2>Composition of structures</h2>
+<p>Abstract algebra provides a huge catalog of techniques for composing structures and universal properties about these structures. As we saw in the beginning, one way to approach building larger programs is by seeking out techniques of combining programs to create larger programs. In other words, such techniques could be termed an algebra of programs.</p>
+
+<p>So let's talk about some basic algebraic structures.</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Semigroups</h1>
+<p>A semigroup is about as simple as we can get algebraically. It consists of a set of "things" and a binary <strike>operator</strike> function over that set whose results are also members of that set, and the function must be associative.</p>
+<p>No seriously, that's it. Nothing else. So let's look at some things that are semigroups.</p>
+
+<dl>
+	<dt>Addition over the integers.</dt>
+	<dd>Addition is associative: <code>2 + (3 + 4) = (2 + 3) + 4</code>. Addition of two integers always gives you another integer. Also, let's just write this as a programmer: <code>add(x, add(y, z)) = add(add(x,y), z)</code>. See, "prefix notation" and operators are just binary functions with a couple of rules.</dd>
+	<dt>Multiplication over the integers.</dt>
+	<dd>Multiplication is also associative, and multiplying two integers will result in an integer.</dd>
+	<dt>Boolean Or over the booleans.</dt>
+	<dd>Or is associative: <code>or(a, or(b,c)) = or(or(a,b), c)</code>(seriously, enumerate every possible option, it's possible in this case), and or'ing two booleans results in a boolean.</dd>
+	<dt>Boolean And over the booleans.</dt>
+	<dd>And is also associative, and and'ing two booleans gives us a boolean.</dd>
+	<dt>List concatenation over lists.</dt>
+	<dd>We already presented this, but let's hit it again: <code>concat(list1, list2)</code> will always give us another list, and <code>concat(list1, concat(list2, list3)) = concat(concat(list1, list2), list3)</code> is always true. Even I won't be so tedious as to present strings(a string is a list of characters. Right? If you don't believe me, go write some C code to handle Unicode strings as your punishment.)</dd>
+	<dt>Function composition.... over pure functions whose domain and codomain match.</dt>
+	<dd>Okay, that makes... hey wait a minute...</dd>
+</dl>
+</div>
+
+<div class="slide">
+<h1>Composition of pure functions</h1>
+<p>First, let's look at function composition, and we'll do it in JavaScript to make it concrete:
+<pre><code class="js">function compose(f,g) { return function(x) { return f(g(x)); }; }</code></pre>.
+Now, let's look at an impure function(which is why I have to do this in JavaScript, since every Haskell function is pure):
+<pre><code class="js">function church(x) {
+	return function (y) {
+		x = x + 1;
+		return y + x;
+	};
+}</code></pre></p>
+
+<p>So <code>church</code> is a function that returns a function that also happens to capture some state. So let's compose it just to prove we can:
+<pre><code class="js">let newFunction = compose(church(1), church(2));
+console.log(newFunction(1)); // 6</code></pre>
+Now, let's look at the associative property rule: <code>compose(f,compose(g,h)) = compose(compose(f,g),h)</code>. Okay, that's makes sense. So let's write two expressions and evaluate them and compare their results!
+<pre><code class="js">
+let evil = church(1);
+let left = compose(evil, compose(church(2), evil));
+let right = compose(compose(evil, church(2)), evil);
+console.log(left(2)); // 10
+console.log(right(2)); // 14</code></pre>
+The evil function threaded state throughout our code, and thus, evil was evaluated 4 times, changing the value of x it used each time. And this is what happens when you don't keep church and state separate<sup>[1]</sup>.</p>
+
+<p>So function composition of pure functions is almost associative... so what's this comment about the domain and codomain being the same? A semigroup is on a set, in this case a set of functions. The binary operator (in this case, function composition) must be defined for <em>every</em> pair of elements in the set, including: <code>compose(f,f) = g</code> for every <code>f</code> in the set, and <code>g</code> must also be in the set too. The easiest way to guarantee this is just say all the functions map the domain back to itself. That way the result of every function will be compatible with the parameter of every other function in the set.</p>
+
+<p>[1] Jokes involving the lambda calculus are underappreciated in my opinion.</p>
 </div>
 
 <div class="slide">
@@ -807,7 +863,7 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 
 <h2>Monad Laws</h2>
 <p>On the Haskell Wiki, you will see that Monad's must meet the requirements of the <a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a>. This matters because Haskell's type system is not capable of proving that the functions involved follow those rules. However, if you scroll down to the bottom of that page, you'll see the laws cast in terms of a function called <code>>=></code>(the Kleisli composition operator), and a function called <code>return</code>:
-<pre><code class="haskell"> return >=> g &equiv; g
+<pre><code class="haskell">return >=> g &equiv; g
 f >=> return &equiv; f
 (f >=> g) >=> h &equiv; f >=> (g >=> h)</code></pre>
 Which, looks a lot like the definition of a monoid... mostly because it is the definition of a monoid.</p>
