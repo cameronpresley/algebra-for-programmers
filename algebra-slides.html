@@ -377,7 +377,7 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 <p>I have a claim.</p>
 <h1>Mulithreaded programming is hard because there is no composition operator that preserves correctness when combining two correct multithreaded programs.</h1>
 
-<p>Actor concurrency, with "shared nothing" memory, is a great and useful thing, but it you can still write programs using actors that can not be combined without bugs(like deadlock, livelock, and friends).</p>
+<p>Actor concurrency, with "shared nothing" memory, is a great and useful thing, but even with it you can still write programs using actors that can not be combined without bugs(like deadlock, livelock, and friends).</p>
 </div>
 
 
@@ -458,9 +458,9 @@ drain name source sink lock = do
     if from > 0
         then
             (atomically $ (drainOne source sink)) >> milliSleep 1 >> (drain name source sink lock)
-        else return ()</code></pre>
+        else return ()
 
-milliSleep = threadDelay . (*) 1000
+milliSleep = threadDelay . (*) 1000</code></pre>
 </div>
 
 <div class="slide">
@@ -776,7 +776,9 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 <div class="slide">
 <h1>Semigroups</h1>
 <p>A semigroup is about as simple as we can get algebraically. It consists of a set of "things" and a binary <strike>operator</strike> function over that set whose results are also members of that set, and the function must be associative.</p>
-<p>No seriously, that's it. Nothing else. So let's look at some things that are semigroups.</p>
+<p>No seriously, that's it. Nothing else.</p>
+<p>Some people like to come up with metaphors, but the whole goal of abstract algebra is to get away from metaphors. A semigroup is any pair that has these properties, no more, no less.</p>
+<p>So let's look at some things that are semigroups.</p>
 
 <dl>
 	<dt>Addition over the integers.</dt>
@@ -789,6 +791,14 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 	<dd>And is also associative, and and'ing two booleans gives us a boolean.</dd>
 	<dt>List concatenation over lists.</dt>
 	<dd>We already presented this, but let's hit it again: <code>concat(list1, list2)</code> will always give us another list, and <code>concat(list1, concat(list2, list3)) = concat(concat(list1, list2), list3)</code> is always true. Even I won't be so tedious as to present strings(a string is a list of characters. Right? If you don't believe me, go write some C code to handle Unicode strings as your punishment.)</dd>
+	<dt>The "find the minimum of a pair" function, <code>min(a,b)</code>, over integers.</dt>
+	<dd>So what is the min function? <code>min(a,b)</code> returns the smaller of the two values <code>a</code> and <code>b</code>. Now, this is an associative function: <code>min(a, min(b,c)) = min(min(a,b), c)</code>.</dd>
+	<dt>The <code>max</code> function over the integers.</dt>
+	<dd>The flip side of the min function: <code>max(a,b)</code> gives the larger of the two values, and it too is associative: <code>max(a, max(b,c)) = max(max(a,b), c)</code>.</dd>
+	<dt>Set Union over, well, sets.</dt>
+	<dd>Set union produces another set, and set union is associative: <code>union(a,union(b,c)) = union(union(a,b), c)</code>.</dd>
+	<dt>To your great shock, set intersection over sets.</dt>
+	<dd>Again, set intersection produces another set, and it is associative: <code>intersect(a,intersect(b,c)) = intersect(intersect(a,b),c)</code>.</dd>
 	<dt>Function composition.... over pure functions whose domain and codomain match.</dt>
 	<dd>Okay, that makes... hey wait a minute...</dd>
 </dl>
@@ -797,7 +807,7 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 <div class="slide">
 <h1>Composition of pure functions</h1>
 <p>First, let's look at function composition, and we'll do it in JavaScript to make it concrete:
-<pre><code class="js">function compose(f,g) { return function(x) { return f(g(x)); }; }</code></pre>.
+<pre><code class="js">function compose(f,g) { return function(x) { return f(g(x)); }; }</code></pre>
 Now, let's look at an impure function(which is why I have to do this in JavaScript, since every Haskell function is pure):
 <pre><code class="js">function church(x) {
 	return function (y) {
@@ -823,6 +833,54 @@ The evil function threaded state throughout our code, and thus, evil was evaluat
 <p>[1] Jokes involving the lambda calculus are underappreciated in my opinion.</p>
 </div>
 
+
+
+<div class="slide">
+<h1>Monoids</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>Lattices</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>An Algebra of Types</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>Fixed points</h1>
+<p>In the interest of providing an overview of concepts and demystifiying them, I want to briefly discuss fixed points. A longer discussion is quite worthwhile, but something to explore on your own, or discuss in a talk dedicated to the topic.</p>
+
+<p>A fixed point of a function, <code>f</code>, is a value <code>x</code>, such that <code>f(x) = x</code>.</p>
+
+<p>Now, it's probably easy to see that <em>every</em> value of the domain of the identity function is a fixed point of the identity function. In fact, that's the definition of the identity of function: <code>identity(x) = x</code>. Not every function has a fixed point, some have many fixed points.</p>
+
+<p>However, this is all a discussion in terms of numbers. What about higher ordered functions? <code>f(x) = x</code> where the value of <code>x</code> is a function rather than a "simple" value?</p>
+
+<p>It turns out that in the lambda calculus, there is a function that satisifies this "fixed point" property, and that function has been given the special name the <strong>Y Combinator</strong>. Even more fascinating, rather than being a mathematical curiousity, it turns out that the Y combinator is useful in definining recursive functions<sup>[1]</sup> like:
+<pre><code class="scheme">(define (fib n)
+	(if (&lt;= n 2)
+		1
+		(+ (fib (- n 1)) (fib (- n 2)))))</code></pre>
+The problem that the Y Combinator solves is that <code>fib</code> is used inside the definition of <code>fib</code>. Similiarly, in algebraic data types:
+<pre><code class="haskell">data Tree a = EmptyTree | Node a (Tree a) (Tree a)</code></pre>
+<code>Tree</code> is used in the definition of <code>Tree</code>. Basically, the Y Combinator is used to define the formal semantics of these constructions behind the scenes. Another way of stating it: it allows anonymous functions to express self-reference(i.e. achieve recursion) even though we don't have "names". (One should also note, self reference is one consequence of Turing Completeness, in other words, <em>every</em> Turing Complete language has a fixed point function of some sort.)</p>
+
+<p>So, fixed points of higher order functions are interesting, and a worthwhile thing to study, but are not often needed directly in day to day coding. (Or rather, if it is something you find yourself doing in "regular code", much like hand performing a translation of a program to continuation passing style, it is a sign that you should consider ask questions about the nature of the code you're writing and whether there is a way to exploit the language you are using to perform this sort of operation for you.) Mostly I am not trying to discourage this, but rather point out that going through a discussion like <a href="https://www.dreamsongs.com/Files/WhyOfY.pdf">The Why of Y</a> will take a couple of hours, a whiteboard, and possibly a mutiny of you convince a bunch of undergraduate Computer Science students that it's a fun way to spend a Thursday evening<sup>[2]</sup>.</p>
+
+<p>[1] The startup accelerator Y Combinator is a company that bootstraps companies, and it's name is a play on the fact they are a "recursive" company. Yes, this is another instance of lambda calculus derived humor.</p>
+<p>[2] I may or may not have done this in college.<sup>[3]</sup></p>
+<p>[3] This talk may or may not be an example of me not learning my lesson the first time.<sup>[4]</sup></p>
+<p>[4] Recursive footnotes are recursive.<sup>[4]</sup></p>
+</div>
+
+
 <div class="slide">
 <h1>Category Theory</h1>
 
@@ -840,6 +898,8 @@ The evil function threaded state throughout our code, and thus, evil was evaluat
 
 <p>One reason Category Theory is popular within computing is that it seeks to find universal properties that underly families of mathematical objects, even ones that are seemingly unrelated. This leads to another reason Category Theory is popular for some computer scientists is that it is very concerned with composition. The composition of functions, and of mathematical ideas in general. Ideas like composable mathematical proofs are popular to explore as well. Finding universal principles that apply to many "categorical objects" is also done. These ideas of finding invariants and ways to compose things have been at the heart of what I was trying to demonstrate with this talk: <em>How to build larger things from smaller things in ways that preserves the correctness/maintains the invariants, of the smaller things.</em>.</p>
 </div>
+
+
 
 <div class="slide">
 <h1>Monads</h1>
@@ -937,7 +997,6 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 </div>
 
 <div>
-Fixed points
 Morphisms
 Maps
 Bijective
@@ -979,6 +1038,11 @@ https://en.wikipedia.org/wiki/List_of_abstract_algebra_topics
 <ul>
 	<li><a href="http://worrydream.com/refs/Backus-CanProgrammingBeLiberated.pdf">Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</a> John Backus, 1977, Turing Award.</li>
 	<li><a href="https://www.cs.umd.edu/class/spring2003/cmsc838p/Design/criteria.pdf">On the criteria to be used in decomposing systems into modules</a> - D. L. Parnas, 1979.</li>
+	<li><a href="https://www.amazon.com/Mock-Mockingbird-Other-Logic-Puzzles/dp/0192801422">To Mock a Mockingbird: And Other Logic Puzzles</a></li>
+	<li><a href="http://combinators.info/">Kestrels, Quirky Birds, and Hopeless Egocentricity</a></li>
+	<li><a href="https://www.dreamsongs.com/Files/WhyOfY.pdf">The Why of Y</a></li>
+	<li><a href="https://www.amazon.com/Little-Schemer-Daniel-P-Friedman/dp/0262560992">The Little Schemer</a></li>
+	<li><a href="http://www.catonmat.net/blog/derivation-of-ycombinator/">Derivation of the Y Combinator</a></li>F
 </ul>
 <h2>Concurrency and Parallelism</h2>
 <ul>
