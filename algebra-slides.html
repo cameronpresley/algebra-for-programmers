@@ -749,7 +749,7 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 
 <div class="slide">
 <h1>Transitivity</h1>
-
+TO DO
 </div>
 
 
@@ -837,18 +837,92 @@ The evil function threaded state throughout our code, and thus, evil was evaluat
 
 <div class="slide">
 <h1>Monoids</h1>
+<p>A Monoid is pretty simple too. It consists of a set of "things" and a binary function over that set of things whose results are also members of that set, and the function must be associative. Also, there must be an element in that set that behaves as an identity with that operator.</p>
+<p>If you're astute, you've realized that this is almost the same thing as a Semigroup. In fact, <em>every</em> Monoid is also a Semigroup. In fact, almost anything of interest that is a Semigroup is usually a Monoid. (And even when they aren't, Mathematicians pull some sleight of hand to fix that... more later.) So let's look at our list of pairs that are Semigroups!</p>
+
+<ul>
+	<li>Addition over the integers - <code>0</code> is the identity.</li>
+	<li>Multiplication over the integers - <code>1</code> is the identity.</li>
+	<li>Boolean or over the booleans - <code>false</code> is the identity.</li>
+	<li>Boolean and over the booleans - <code>true</code> is the identity.</li>
+	<li>List concatenation over lists - <code>[]</code>(The empty list) is the identity. <code>""</code>, likewise, the empty string for strings.</li>
+	<li>The minimum function over the integers - Some would use <code>+&infin;</code>, and that is legitimate, but I prefer to use <code>&top;</code>, we'll come back to this on the next slide.</li>
+	<li>The maximum function over the integers - <code>-&infin;</code> is the "obvious choice", but I prefer <code>&bot;</code>, but we'll discuss in a moment.</li>
+	<li>Set union over sets - <code>&emptyset;</code>(the empty set) is the obvious choice.</li>
+	<li>Set intersection overs sets - The set of all possible sets... wait... now things are completely breaking down. Let's say there is no obvious choice for the time being.</li>
+	<li>Function composition over endomorphisms - The identity function is the correct choice. Also, we'll cover that word morphism later, but it's a function(morphism) whose codomain is equal to it's domain. Don't worry, function composition isn't the trick question on this slide.</li>
+</ul>
+</div>
+
+
+
+<div class="slide">
+<h1>Identity crisis.</h1>
+<p>As we saw, most of our semigroups are also monoids because they have an "obvious" identity element. As we expanded to concepts like <code>min</code> and <code>max</code>, the obvious choice is problematic. Why is that? The concept of &infin; makes many mathematicians uncomfortable, and indeed, the rules often change in surprising way when discussing infinity<sup>[1]</sup>. Indeed, the concept of "positive infinity" and "negative infinity" are not properly considered part of the integers.</p>
+
+<p>However, rather than try and add an infinite ordinal to the integers, and risk the wrath of the <a href="https://en.wikipedia.org/wiki/Axiom_of_choice">Axiom of Choice</a>, we can sidestep the entire issue by defining, ipso faco, two elements which are not an integer. Much like we often name "identity elements" <code>1</code> when discussing identity elements that aren't numbers(like the identity function), we often call these elements Top - <code>&top;</code>, and Bottom(or Bot) - <code>&bot;</code>.</p>
+
+<p>Now, equipped with &top; and &bot; we can make the following statements about min and max:
+<pre><code class="haskell">min(a, &top;) = min(&top;, a) = a
+max(a, &bot;) = max(&bot;, a) = a</code></pre>
+In fact, we can generalize this idea to any semigroup: create a new element that is not a member of the set of things and define the operation on the expande set to satisfy the requirements that our element be an identity. However, finding an <em>interpretation</em> of this generated identity in the underlying concrete instance may be "problematic" to say the least.</p>
+
+<p>For instance, in the case of set intersection, I have avoided being formal for the most part, but now, much as the case with pure functions that are endomorphisms, we must confront things with some clarification. Given a particular (finite, and in some cases infinite) set of items, we can construct a set that contains those items and use it as our identity with respect to set intersection, thus converting it into a monoid. However, the concept of a <em>set of all possible sets</em> is not "well defined", and indeed, is such a problematic question that we're going to come back to it in a few moments. But first...</p>
+
+<p>[1] I spent 6 class sessions(3 weeks) of my Intro to Topology class standing at the blackboard trying to fix a proof involving the union of an infinite sequence of sets, while the entire class stood on watching... only later to discover that their lack of help was because they hadn't done their homework either, and were allowing the professor to spend class time on me so they could get caught up. Ben, if you're out there, I haven't forgotten...</p>
 </div>
 
 
 
 <div class="slide">
 <h1>Lattices</h1>
+<p>A lattice is an algebraic structure, like monoids, and semigroups, however, it is based on a binary relation that we will call a "partial order". To start with a simple example, &le;, the relation less-than-or-equal, on the integers is an ordering of the integers. In fact, lattices are a generalization of this concept of a sequence.</p>
+
+<p>To be a partial order, a relation, called &le; here, must follow some rules:</p>
+<code>a &le; a (reflexive)<br/>
+if a &le; b and b &le; c then a &le; c (transitive)<br />
+if a &le; b and b &le; a then a = b (antisymmetry)</code>
+
+<p>In general, given a partial order, the top and bottom element of the set is denoted as "top"(&top;) and "bot"(&bot;). Informally this feels like positive and negative infinity, but this avoids the problems with infinity, and works well more abstract lattices.</p>
+
+<h2>Types</h2>
+<p>We can construct lattices of more than just numbers though. For instance, we can understand algebraic data types through the lens of lattices via the binary relation "is a subtype of", written as "<code>&lt;:</code>".</p>
+
+<p>For instance, in many "object oriented" languages, <code>Object</code> is the supertype of every type, and thus, we can say for a type <em>T</em>, that <em>T</em> &lt;: <code>Object</code>. In languages like Haskell, there is a type called <code>Void</code> and it can be said to be a subtype of every type. (Haskell doesn't define a notion of a subtype in the language itself, however, we can say this speaking abstractly.)</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Cantor and the development of modern mathematics.</h1>
+<p>Before we continue with more dense formalisms, I want to take a break to talk about the history of mathematics. Georg Cantor was a mathematician who lived between 1845 and 1918. If you've heard of the Cantor Set, this is the same Cantor (and that set has applications outside of pretty pictures of fractals, in particular, it's a useful example for measure theory in analysis).</p>
+
+<p>In 1891, Cantor came out with a proof which set the world of Mathematics ablaze and arguments over his work helped develop modern mathematics. His proof was a deceptively simple discussion of the cardinality(read <strong>size</strong>) of infinite sets. In particular, the first part of his proof showed that the natural numbers(1, 2, 3, and so on), are the "same size" as the integers(0, 1, -1, 2, -2, and so on). Now, we would say he made a "one to one and onto mapping" between these sets. He also showed that the rational numbers(ratios of integers) were the same size. So far, everyone was with him, however, when we he got to the Real numbers(which include the irrationals, like &pi; and the &radic;2 and so on, which, is itself difficult tricky to define), he proved that there is no such mapping. That one can say that there are infinitely more "real numbers" than rationals, the "size" of the reals is a bigger infinity than the infinitely large size of the rationals.</p>
+
+<p>This immediately started a <a href="https://en.wikipedia.org/wiki/Controversy_over_Cantor%27s_theory">storm of controversy</a> about the validity of his proof, and the counter-intuitive observation that there could be different "sizes" of infinity, and lead to such important question as "what exactly IS a proof anyway?".</p>
+
+<h2>Russell's Paradox</h2>
+<p>One of the people in this maelstrom was Bertrand Russell, who set out to formalize all of mathematics. This work was called <a href="https://en.wikipedia.org/wiki/Principia_Mathematica">Principia Mathematica</a> and it was during the development of this work, in 1901. that he enountered what we call <a href="http://plato.stanford.edu/entries/russell-paradox/">Russell's Paradox</a>, which is about the nature of "the set of all possible sets". Russell's solution was to develop a system of types of sets, where each "higher order" of set could only contain members of at most, the previous order. This was one of the first modern type systems and has connections to modern works on type theory.</p>
+
+<h2>G&ouml;del's Incompleteness Theorem</h2>
+<p>Bertrand Russell is often held up as a great figure in the history of mathematics. One example of why he is looked up favorably involves the work of Kurt G&ouml;del. G&ouml;del was studying formal systems, and in brief, his work was to show than "sufficiently powerful formal system"(i.e. one that can handle what we would call "arithmetic") cannot be "complete": that is, categorize every statement that can be expressed in that formal system as either true, or false. This leads to "undecidable" statements. His work on the <a href="http://plato.stanford.edu/entries/goedel/">Incompleteness Theorem</a> and it's related works, all done in the 1930's, is one of the greatest works of 20th century mathematics. It also rendered the project behind Russell's Principia Mathematica pointless in some sense. And when G&ouml;del pointed out some of the implications in his correspondance with Russell, by all accounts, Russell took it quite well, and encouraged him in his work.</p>
+
+<h2>Church, Turing, and the rest</h2>
+<p>This project of formalizing mathematics, partially prompted by Cantor's proof, and answering questions about the nature of formal systems is directly connected to the work of Church and Turing on the nature of computability. Indeed, a theory of computation is one way to think about formal systems in general. Personally, I consider programming and computing branches of mathematics and mathematical logic(which seeks to answer questions about the formal systems underlying mathematics as a whole). The systems we use daily owe much to this revolution in mathematics at the turn of the twentieth century.</p>
 </div>
 
 
 
 <div class="slide">
 <h1>An Algebra of Types</h1>
+TO DO
+</div>
+
+
+
+<div class="slide">
+<h1>Morphisms</h1>
+TO DO
 </div>
 
 
@@ -1042,7 +1116,7 @@ https://en.wikipedia.org/wiki/List_of_abstract_algebra_topics
 	<li><a href="http://combinators.info/">Kestrels, Quirky Birds, and Hopeless Egocentricity</a></li>
 	<li><a href="https://www.dreamsongs.com/Files/WhyOfY.pdf">The Why of Y</a></li>
 	<li><a href="https://www.amazon.com/Little-Schemer-Daniel-P-Friedman/dp/0262560992">The Little Schemer</a></li>
-	<li><a href="http://www.catonmat.net/blog/derivation-of-ycombinator/">Derivation of the Y Combinator</a></li>F
+	<li><a href="http://www.catonmat.net/blog/derivation-of-ycombinator/">Derivation of the Y Combinator</a></li>
 </ul>
 <h2>Concurrency and Parallelism</h2>
 <ul>
@@ -1052,6 +1126,12 @@ https://en.wikipedia.org/wiki/List_of_abstract_algebra_topics
 	<li><a href="http://yosefk.com/blog/parallelism-and-concurrency-need-different-tools.html">Parallelism and concurrency need different tools</a></li>
 	<li><a href="http://joeduffyblog.com/2010/01/03/a-brief-retrospective-on-transactional-memory/">A (brief) retrospective on transactional memory</a>, Joe Duffy</li>
 </ul>
+<h2>Type Theory</h2>
+<ul>
+	<li><a href="https://www.cis.upenn.edu/~bcpierce/tapl/">Types and Programming Languages</a>, Benjamin Pierce</li>
+	<li><a href="http://chris-taylor.github.io/blog/2013/02/10/the-algebra-of-algebraic-data-types/">The Algebra of Algebraic Data Types, Part 1</a>, <a href="http://chris-taylor.github.io/blog/2013/02/11/the-algebra-of-algebraic-data-types-part-ii/">Part 2</a>, and <a href="http://chris-taylor.github.io/blog/2013/02/13/the-algebra-of-algebraic-data-types-part-iii/">Part 3</a>.</li>
+</ul>
+
 <h2>Category Theory</h2>
 <ul>
 	<li><a href="https://mitpress.mit.edu/books/basic-category-theory-computer-scientists">Basic Category Theory for Computer Scientists</a>, Benjamin Pierce</li>
