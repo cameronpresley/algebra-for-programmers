@@ -736,7 +736,7 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 
 <div class="slide">
 <h1>Pure Functions</h1>
-<p>Up to this point, I have been discussing <em>mathematical functions and relations</em>. However, programmers often deal with functions that involve some notion of "state", and thus, often have "functions" that have some internal state. A pure function is one in that, when provided with the same parameters always maps to the same value.</p>
+<p>Up to this point, I have been discussing <em>mathematical functions and relations</em>. However, programmers often deal with functions that involve some notion of "state", and thus, often have "functions" that have some internal state. A pure function is one that always maps the same parameters to the same values.</p>
 
 <p>One reason to prefer stateless or pure functions is that state transitions cause a combinatorial "explosion" in terms of possibilities. In a system with 2 states, we have to consider the transitions from state 1 to 2, and 2 to 1. However, adding a single state to this, increases the possibilities to 6 (1 to 2, 1 to 3, 2 to 1, 2 to 3, 3 to 1, 3 to 2), and so on.</p>
 
@@ -797,8 +797,10 @@ TO DO
 	<dd>The flip side of the min function: <code>max(a,b)</code> gives the larger of the two values, and it too is associative: <code>max(a, max(b,c)) = max(max(a,b), c)</code>.</dd>
 	<dt>Set Union over, well, sets.</dt>
 	<dd>Set union produces another set, and set union is associative: <code>union(a,union(b,c)) = union(union(a,b), c)</code>.</dd>
-	<dt>To your great shock, set intersection over sets.</dt>
+	<dt>Set Intersection over sets.</dt>
 	<dd>Again, set intersection produces another set, and it is associative: <code>intersect(a,intersect(b,c)) = intersect(intersect(a,b),c)</code>.</dd>
+	<dt>Finding the smallest bounding box that covers two bounding boxes.</dt>
+	<dd>This is a bit of a quirky "small" example, but still fun to consider. Given two bounding boxes we can define a binary operation that returns a new minimal bounding box covering both boxes. It should be straightforward to see that this operation is associative.</dd>
 	<dt>Function composition.... over pure functions whose domain and codomain match.</dt>
 	<dd>Okay, that makes... hey wait a minute...</dd>
 </dl>
@@ -865,7 +867,7 @@ The evil function threaded state throughout our code, and thus, evil was evaluat
 <p>Now, equipped with &top; and &bot; we can make the following statements about min and max:
 <pre><code class="haskell">min(a, &top;) = min(&top;, a) = a
 max(a, &bot;) = max(&bot;, a) = a</code></pre>
-In fact, we can generalize this idea to any semigroup: create a new element that is not a member of the set of things and define the operation on the expande set to satisfy the requirements that our element be an identity. However, finding an <em>interpretation</em> of this generated identity in the underlying concrete instance may be "problematic" to say the least.</p>
+In fact, we can generalize this idea to any semigroup: create a new element that is not a member of the set of things and define the operation on the expanded set to satisfy the requirements that our element be an identity. However, finding an <em>interpretation</em> of this generated identity in the underlying concrete instance may be "problematic" to say the least.</p>
 
 <p>For instance, in the case of set intersection, I have avoided being formal for the most part, but now, much as the case with pure functions that are endomorphisms, we must confront things with some clarification. Given a particular (finite, and in some cases infinite) set of items, we can construct a set that contains those items and use it as our identity with respect to set intersection, thus converting it into a monoid. However, the concept of a <em>set of all possible sets</em> is not "well defined", and indeed, is such a problematic question that we're going to come back to it in a few moments. But first...</p>
 
@@ -1004,14 +1006,27 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 
 <p>This talk was not meant to be a secret "monad tutorial". In fact, I don't want you to take away how to use or define monads. Instead...</p>
 
-<h1>Monads are about composition operators that preserve correctness.</h1>
-<p>In other words, when we define operators for composing things that preserve invariants or maintain some idea about correctness, it might be a monad. So it's yet another tool for talking about ways to compose things out of other things.</p>
+<h1>Monads are about composition operators that preserve correctness within a particular universe of computation.</h1>
+<p>In other words, when we define operators for composing things that preserve invariants or maintain some idea about correctness, it might be a monad. So it's yet another tool for talking about ways to compose things out of other things. I want to point out something important: <strong>Monads have nothing to do with side effects or I/O. Monads are a mathematical object that just "is".</strong> Now, because they are associative, they provide a framework for reasoning about things that require a degree of ordering and work with pure functions. Of course, Mathematically, impure functions don't exist (go back to the slide about "world passing style"...), so this is a bit of a redundant statement. But in a language like Haskell which only has pure functions(the first rule of <code>unsafePerformIO</code> is that we do not talk about <code>unsafePerformIO</code>) this turns out to be handy since, you know, side effects are useful. Monads are used as a general structuring principle in Haskell, much like <code>java.lang.Iterable</code> is used in Java programs, and Promises are in JavaScript.</p>
+</div>
+
+<div class="slide">
+<h1>A personal opinion</h1>
+<p>I like category theory just fine, and it really is applicable to problems in computing. I think, however, that it gets overemphasized it's easy to latch on to it's terminology. You can use <em>algebraic</em> reasoning about code without resorting to category theory. The reason I brought it into this talk is that in exploring functional programming, you're going to come into contact with it. Studying it can, in the longer run, provide insights into universal computational structures. But if it's discouraging you from exploring functional programming, do not let it hold you back. In fact, it would probably make more sense to study the topic <em>after</em> you have explored functional programming for a while.</p>
+
+<p>In fact, Monads are not even the only compositionally correct mathematical tool for reasoning about side effects<sup>[1]</sup>. In fact, as one criticism points out, composing monads themselves is actually tricky. Uniqueness types(also called linear types) are another popular approach to reason about side effects. They are not as universal as monads, but this makes it a lot simpler. Of course, I suspect many of you are already at least aware of uniqueness typing: it's part of the theoretical basis for Rust's Ownership types. So, by all means, study category theory, unless you find yourself overwhelmed and discouraged from exploring functional programming, then, do not worry about it. There's always time for it later, and there are quite a few things to explore that will make it easier return to later.</p>
+
+<p>[1] For criticisms of monads from respectable computer scientists who know their stuff, consider these two links: <a href="https://dl.dropboxusercontent.com/u/40457956/haskell_sucks.pdf">Haskell Sucks!</a> by Paul Bone and <a href="http://fexpr.blogspot.com/2011/12/trouble-with-monads.html">The trouble with monads</a> by John Shutt.</p>
 </div>
 
 
 <div class="slide">
 <h1>Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</h1>
-<p>In 1977 (almost 40 years ago), the ACM awarded John Backus(yes, the "B" in Backus-Naur Form(BNF), the John Backus who helped INVENT and define Fortran AND Algol. As part of that award he delivered a lecture and wrote an article. The title of that article was <em>Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</em> Below, I present a list of the section headings from this paper.</p>
+<p>In 1977 (almost 40 years ago), the ACM awarded John Backus(yes, the "B" in Backus-Naur Form(BNF), the John Backus who helped INVENT and define Fortran AND Algol. As part of that award he delivered a lecture and wrote an article. The title of that article was <em>Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</em></p>
+
+<p>One of Backus's chief points was that in order to grow what we can do with software, we must work on languages for expressing software that make these larger programs possible to build, and the limitations the models of programming languages at the time were suffering from. Now, some of his complaints about obesity are a bit quaint considering that every programming language standard in 1977 that he was discussing is positively tiny compared to modern day languages(C++14 anyone? .Net or Java, take your pick.) But this is digression. One of the points his paper builds to is that in order to reason about larger programs, we must build them from smaller programs combined with algebraic primitives, that have useful mathematical properties that enable that reasoning. In other words, he wanted an algebra of programs with programming languages built on these concepts.</p>
+
+<p>Below, I present a list of the section headings from this paper(emphasis mine), now keep in mind, this was 1977. Who said computer science moves at an impossible speed to keep up with? If you believe that, I challenge you to read this paper to challenge your thinking. It's quite readable even today, other than some drift in notation over the years.</p>
 
 <ol>
 	<li>Conventional Programming Languages: Fat and Flabby</li>
@@ -1022,13 +1037,13 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 					<li>Foundations</li>
 					<li>History Sensitivity</li>
 					<li>Type of Semantics</li>
-					<li>Clarity and conceptual usefulness of programs</li>
+					<li><strong>Clarity and conceptual usefulness of programs</strong></li>
 				</ol>
 			</li>
 			<li>Classification of Models
 				<ol>
 					<li>Simple operational models</li>
-					<li>Applicative models</li>
+					<li><strong>Applicative models</strong></li>
 					<li>Von Neumann models</li>
 				</ol>
 			</li>
@@ -1036,17 +1051,50 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 	</li>
 	<li>Von Neumann Computers</li>
 	<li>Von Neumann Languages</li>
-	<li></li>
-	<li></li>
-	<li></li>
-	<li></li>
-	<li></li>
-	<li></li>
-	<li></li>
-	<li>The Algebra of Programs for FP Systems
+	<li>Comparison of von Neumann and Functional Programs
+		<ol>
+			<li>A von Neumann Program for Inner Product</li>
+			<li>A Functional Program for Inner Product</li>
+		</ol>
+	</li>
+	<li>Language Frameworks versus Changeable Parts</li>
+	<li><strong>Changeable Parts and Combining Forms</strong></li>
+	<li>APL versus Word-at-a-Time Programming</li>
+	<li><strong>Von Neumann Languages Lack Useful Mathematical Properties</strong></li>
+	<li>What Are the Alternatives to von Neumann Languages?</li>
+	<li>Functional Programming Systems (FP Systems)
 		<ol>
 			<li>Introduction</li>
-			<li>Some Laws of the Algebra of Programs</li>
+			<li>Description
+				<ol>
+					<li>Objects</li>
+					<li><strong>Application</strong></li>
+					<li><strong>Functions</strong></li>
+					<li><strong>Functional forms</strong></li>
+					<li>Definitions</li>
+				</ol>
+			</li>
+			<li>Examples of Functional Programs
+				<ol>
+					<li><strong>Factorial</strong><em>(Editorial note from Emily: Some things never change...)</em></li>
+					<li>Inner product</li>
+					<li>Matrix multiply</li>
+				</ol>
+			</li>
+			<li>Remarks about FP Systems
+				<ol>
+					<li>FP systems as programming languages</li>
+					<li>Limitations of FP systems. <em>(Editorial note from Emily: He discusses the issue of modeling state in a pure language.)</em></li>
+					<li>Expressive power of FP systems</li>
+					<li>Advantages of FP systems</li>
+				</ol>
+			</li>
+		</ol>
+	</li>
+	<li><strong>The Algebra of Programs for FP Systems</strong>
+		<ol>
+			<li>Introduction</li>
+			<li><strong>Some Laws of the Algebra of Programs</strong></li>
 			<li>Example: Equivalence of Two Matrix Multiplication Programs</li>
 			<li>Expansion Theorems
 				<ol>
@@ -1065,8 +1113,57 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 					<li>Example: proof of equivalence of two iterative programs.</li>
 				</ol>
 			</li>
+			<li>Nonlinear Equations
+				<ol>
+					<li>Example: proof of idempotency</li>
+				</ol>
+			</li>
+			<li><strong>Foundations for the Algebra of Programs</strong></li>
+			<li><strong>The Algebra of Programs for the Lambda Calculus and for Combinators</strong></li>
+			<li>Remarks</li>
 		</ol>
 	</li>
+	<li><strong>Formal Systems for Functional Programming(FFP Systems)</strong>
+		<ol>
+			<li>Introduction</li>
+			<li>Syntax</li>
+			<li>Informal Remarks About FFP Semantics
+				<ol>
+					<li>The meaning of expressions; the semantic function &mu;</li>
+					<li>How objects represent functions; the representation function &rho;</li>
+					<li>Summary of the properties of &rho; and &mu;</li>
+					<li>Cells, fetching, and storing</li>
+				</ol>
+			</li>
+			<li>Formal Semantics for FFP Systems</li>
+		</ol>
+	</li>
+	<li><strong>Applicative State Transition Systems (AST Systems)</strong> <em>(Editorial note from Emily: I find elements of this section rhyme with "Erlang")</em>
+		<ol>
+			<li>Introduction</li>
+			<li>The Structure of Algol Compared to That of AST Systems</li>
+			<li>Structure of an AST System
+				<ol>
+					<li>Transition rules for an elementary AST system</li>
+					<li>Transition rules: exception conditions and startup.</li>
+					<li>Program access to the state; the function &rho; DEFS</li>
+				</ol>
+			</li>
+			<li>An Example of a System Program
+				<ol>
+					<li>General plan of the system program</li>
+					<li>The "subsystem" function</li>
+					<li>Installing the system program</li>
+					<li>Using the system</li>
+				</ol>
+			</li>
+			<li>Variants of AST Systems</li>
+			<li>Remarks About AST Systems</li>
+			<li>Naming Systems in AST and von Neumann Models</li>
+		</ol>
+	</li>
+	<li>Remarks About Computer Design</li>
+	<li>Summary</li>
 </ol>
 </div>
 
@@ -1076,9 +1173,7 @@ Maps
 Bijective
 Injective
 Equivalence Classes
-Lattices
 Domains
-Euclid's Algorithm
 
 http://www.stephendiehl.com/posts/abstraction.html?HN_20160519
 
@@ -1090,7 +1185,6 @@ http://www.regentsprep.org/regents/math/algtrig/atp5/lfunction.htm
 https://en.wikipedia.org/wiki/Ordered_pair
 
 https://en.wikipedia.org/wiki/Monoid
-https://en.wikipedia.org/wiki/Semigroup
 https://en.wikipedia.org/wiki/Commutative_property#Noncommutative_operations_in_mathematics
 https://en.wikipedia.org/wiki/Group_(mathematics)
 https://en.wikipedia.org/wiki/Ring_(mathematics)
@@ -1100,9 +1194,6 @@ http://mathworld.wolfram.com/EquivalenceClass.html
 https://en.wikipedia.org/wiki/Intuitionistic_type_theory
 https://en.wikipedia.org/wiki/Homotopy_type_theory
 https://homotopytypetheory.org/blog/
-https://en.wikipedia.org/wiki/Universal_algebra
-https://en.wikipedia.org/wiki/Abstract_algebra
-https://en.wikipedia.org/wiki/List_of_abstract_algebra_topics
 </div>
 
 
@@ -1138,6 +1229,9 @@ https://en.wikipedia.org/wiki/List_of_abstract_algebra_topics
 	<li><a href="http://plato.stanford.edu/entries/category-theory/">Stanford Encyclopedia of Philosophy - Category Theory</a></li>
 	<li><a href="http://www.stephendiehl.com/posts/monads.html">Monads Made Difficult</a></li>
 	<li><a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a></li>
+	<li><a href="http://okmij.org/ftp/Computation/monadic-shell.html">Monadic i/o and UNIX shell programming</a></li>
+	<li><a href="https://dl.dropboxusercontent.com/u/40457956/haskell_sucks.pdf">Haskell Sucks!</a>, Paul Bone</li>
+	<li><a href="http://fexpr.blogspot.com/2011/12/trouble-with-monads.html">The trouble with monads</a>, John Shutt</li>
 </ul>
 
 </div>
