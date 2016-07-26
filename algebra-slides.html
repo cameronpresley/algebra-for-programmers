@@ -35,7 +35,7 @@
 <h1>Goals of this presentation</h1>
 <ul>
 	<li>Explain terminology frequently used in discussion of functional programming, in particular terms from algebra and (some) terms of category theory.</li>
-	<li>Provide a review of topics in elementary algebra(i.e. what is typically covered in high school algebra classes).</li>
+	<li>Provide a review of relevant topics in elementary algebra(i.e. what is typically covered in high school algebra classes).</li>
 	<li>Connect algebraic topics to their appearance in functional programming.</li>
 	<li>Demonstrate that building programs out of smaller programs using reliable combining operations is "doing algebra". (Or rather, algebra studies primitives that can help us study how to do this better.)</li>
 	<li>Try to help alleviate "jargon overload" to people new to functional programming...</li>
@@ -907,10 +907,12 @@ if a &le; b and b &le; a then a = b (antisymmetry)</code>
 <p>One of the people in this maelstrom was Bertrand Russell, who set out to formalize all of mathematics. This work was called <a href="https://en.wikipedia.org/wiki/Principia_Mathematica">Principia Mathematica</a> and it was during the development of this work, in 1901. that he enountered what we call <a href="http://plato.stanford.edu/entries/russell-paradox/">Russell's Paradox</a>, which is about the nature of "the set of all possible sets". Russell's solution was to develop a system of types of sets, where each "higher order" of set could only contain members of at most, the previous order. This was one of the first modern type systems and has connections to modern works on type theory.</p>
 
 <h2>G&ouml;del's Incompleteness Theorem</h2>
-<p>Bertrand Russell is often held up as a great figure in the history of mathematics. One example of why he is looked up favorably involves the work of Kurt G&ouml;del. G&ouml;del was studying formal systems, and in brief, his work was to show than "sufficiently powerful formal system"(i.e. one that can handle what we would call "arithmetic") cannot be "complete": that is, categorize every statement that can be expressed in that formal system as either true, or false. This leads to "undecidable" statements. His work on the <a href="http://plato.stanford.edu/entries/goedel/">Incompleteness Theorem</a> and it's related works, all done in the 1930's, is one of the greatest works of 20th century mathematics. It also rendered the project behind Russell's Principia Mathematica pointless in some sense. And when G&ouml;del pointed out some of the implications in his correspondance with Russell, by all accounts, Russell took it quite well, and encouraged him in his work.</p>
+<p>Bertrand Russell is often held up as a great figure in the history of mathematics. One example of why he is looked up favorably involves the work of Kurt G&ouml;del. G&ouml;del was studying formal systems, and in brief, his work was to show than "sufficiently powerful formal system"(i.e. one that can handle what we would call "arithmetic") cannot be "complete": that is, categorize every statement that can be expressed in that formal system as either true, or false. This leads to "undecidable" statements. His work on the <a href="http://plato.stanford.edu/entries/goedel/">Incompleteness Theorem</a> and it's related works, all done in the 1930's, is one of the greatest works of 20th century mathematics. It also rendered the project behind Russell's Principia Mathematica, and David Hilbert's program to formalize all of math pointless in some sense. And when G&ouml;del pointed out some of the implications in his correspondance with Russell, by all accounts, Russell took it quite well, and encouraged him in his work.</p>
 
 <h2>Church, Turing, and the rest</h2>
 <p>This project of formalizing mathematics, partially prompted by Cantor's proof, and answering questions about the nature of formal systems is directly connected to the work of Church and Turing on the nature of computability. Indeed, a theory of computation is one way to think about formal systems in general. Personally, I consider programming and computing branches of mathematics and mathematical logic(which seeks to answer questions about the formal systems underlying mathematics as a whole). The systems we use daily owe much to this revolution in mathematics at the turn of the twentieth century.</p>
+
+<p>It's worth noting that Cantor's Diagonalization technique, one of the sources of this controversy is useful in proving the Halting Problem's undecidability, and G&ouml;del's Incompleteness theorems too.</p>
 </div>
 
 
@@ -1202,13 +1204,19 @@ https://homotopytypetheory.org/blog/
 <h1>References</h1>
 <ul>
 	<li><a href="http://worrydream.com/refs/Backus-CanProgrammingBeLiberated.pdf">Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</a> John Backus, 1977, Turing Award.</li>
-	<li><a href="https://www.cs.umd.edu/class/spring2003/cmsc838p/Design/criteria.pdf">On the criteria to be used in decomposing systems into modules</a> - D. L. Parnas, 1979.</li>
 	<li><a href="https://www.amazon.com/Mock-Mockingbird-Other-Logic-Puzzles/dp/0192801422">To Mock a Mockingbird: And Other Logic Puzzles</a></li>
 	<li><a href="http://combinators.info/">Kestrels, Quirky Birds, and Hopeless Egocentricity</a></li>
 	<li><a href="https://www.dreamsongs.com/Files/WhyOfY.pdf">The Why of Y</a></li>
 	<li><a href="https://www.amazon.com/Little-Schemer-Daniel-P-Friedman/dp/0262560992">The Little Schemer</a></li>
 	<li><a href="http://www.catonmat.net/blog/derivation-of-ycombinator/">Derivation of the Y Combinator</a></li>
 </ul>
+
+<h2>Software Engineering</h2>
+<ul>
+	<li><a href="https://www.youtube.com/watch?v=lLnsi522LS8">GOTO 2015 - Progress Toward an Engineering Discipline of Software - Mary Shaw</a>[video]</li>
+	<li><a href="https://www.cs.umd.edu/class/spring2003/cmsc838p/Design/criteria.pdf">On the criteria to be used in decomposing systems into modules</a>, D. L. Parnas, 1979.</li>
+</ul>
+
 <h2>Concurrency and Parallelism</h2>
 <ul>
 	<li><a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Beyond Locks: Software Transactional Memory</a></li>
