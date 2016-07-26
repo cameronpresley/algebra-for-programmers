@@ -457,7 +457,7 @@ drain name source sink lock = do
     withMVar lock $ \_ -> putStrLn $ "draining " ++ name ++ " " ++ (show from) ++ ", " ++ (show to)
     if from > 0
         then
-            (atomically $ (drainOne source sink)) >> milliSleep 1 >> (drain name source sink lock)
+            (atomically $ drainOne source sink) >> milliSleep 1 >> (drain name source sink lock)
         else return ()
 
 milliSleep = threadDelay . (*) 1000</code></pre>
@@ -516,6 +516,72 @@ ghc: sendWakeup: invalid argument (Bad file descriptor)</pre></p>
 <p>So wait, this will just keep going like this no matter how long we delay? Each drain is trying to completely 0 the opposite counter, since they are both moving fairly quickly, and working against each other, neither is going to win (since now they aren't deadlocking and livelocking each other). However, I did have a lock in this, which you might argue is helping me(to be fair to me, locks didn't help me in the other two versions). I did have a version with no lock which behaved the same, except, since both threads were writing logging information to <code>stdout</code>, I got a jumbled mess of interleaved messages. I added the lock so that <code>putStrLn</code> would not jumble the status messages. After all, how else was I going to get output to paste into a slide? Feel free to remove the lock at home. Or, perhaps more fun, refactor the program to use STM to send logging messages to another thread that prints out the messages for us one at a time...</p>
 </div>
 
+<div class="slide">
+<h1>Sugar free Software Transactional Memory drains</h1>
+<p>The idea that we combine things with functions is something I want to emphasize. And that is exactly what the Haskell version of this problem did. However, Haskell actually has a couple of things that can obscure this. Namely, what is called "do-notation" is fancy syntax for making an anonymous function and passing it to a function named <code>>>=</code>. Now <code>>>=</code> is often termed an "operator" in Haskell, but operators are just two parameter functions that can be used "infix style". You can just call them like a normal function by wrapping them in parenthesis and passing arguments to them, like so: <code>(>>=) a b</code>. That would apply the function <code>>>=</code> to the parameters <code>a</code> and <code>b</code>. The fact that Haskell allows nearly any symbol to be used in function names, not just letters, can obscure this if you're used to other languages. Also, anonymous functions are expressed like so: <code>(\param1 -> expression)</code>. The backslash is meant to look like a &lambda; because anonymous functions in the lambda calculus are denoted with &lambda;. One of the first steps the Haskell compiler does is "desugar" do-notation. So, without further ado, here is a "desugared" version of the exact same code from the previous page. So now you can see that: a) It's just function calls, b) Haskell is just a LISP in disguise<sup>[1]</sup>.</p>
+<pre><code class="haskell">import Control.Concurrent
+import Control.Concurrent.STM
+import Control.Monad
+
+moveOne from to source sink =
+    (case ((==) 0 from) of
+        True -> (return ())
+        False ->
+            ((>>=)
+                (writeTVar source (from - 1))
+                (\_ -> (writeTVar sink (to + 1)))))
+
+drainOne source sink =
+    ((>>=)
+        (readTVar source)
+        (\from -> ((>>=)
+            (readTVar sink)
+            (\to -> (moveOne from to source sink)))))
+
+drain name source sink lock =
+    ((>>=)
+        (atomically (readTVar source))
+        (\from ->
+            ((>>=)
+                (atomically (readTVar sink))
+                (\to ->
+                    ((>>=)
+                        (withMVar lock (\_ -> putStrLn (((++) "draining " ((++) name ((++) " " ((++) (show from) ((++) ", " (show to)))))))))
+                        (\_ -> (case ((>) from 0) of
+                            True ->
+                                ((>>=)
+                                    (atomically (drainOne source sink))
+                                    (\_ -> ((>>=)
+                                        (milliSleep 1)
+                                        (\_ -> (drain name source sink lock)))))
+                            False -> (return ()))))))))
+
+
+oneDrain lock ctr1 ctr2 = forkIO (drain "a" ctr1 ctr2 lock)
+
+twoDrains lock ctr1 ctr2 =
+    ((>>=)
+        (forkIO (drain "a" ctr1 ctr2 lock))
+        (\_ -> (forkIO (drain "b" ctr2 ctr1 lock))))
+
+main =
+    ((>>=)
+        (newMVar ())
+        (\lock ->
+            ((>>=)
+                (atomically (newTVar 5))
+                (\ctr1 ->
+                    ((>>=)
+                        (atomically (newTVar 10)) 
+                        (\ctr2 ->
+                            ((>>=)
+                                (oneDrain lock ctr1 ctr2)
+                                --(twoDrains lock ctr1 ctr2)
+                                (\_ -> (milliSleep 60)))))))))
+
+milliSleep = threadDelay . ((*) 1000)</code></pre>
+<p>[1] LISP = Lots of Infernal Stupid Parenthesis</p>
+</div>
 
 
 <div class="slide">
