@@ -385,16 +385,22 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 <h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
 </div>
 
+
+
 <div class="slide">
 <h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
 <h1>Answer: Yes, that was.</h1>
 </div>
+
+
 
 <div class="slide">
 <h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
 <h1>Answer: Yes, that was.</h1>
 <h1>Question: It still didn't work though?</h1>
 </div>
+
+
 
 <div class="slide">
 <h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
@@ -403,8 +409,9 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 <h1>Answer:</h1>
 <p>That's because our function that performed the composition lacked a useful property. It didn't "preserve correctness". Ideally, a composition operator(aka function) will preserve some "invariant". However, we can define different invariants that prove different things.</p>
 
-<p>In fact, one of the insights functional programming has helpd bring to the world was the idea that composition should preserve some type of "correctness property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
+<p>In fact, one of the insights functional programming has helped bring to the world was the idea that composition should preserve some type of "correctness property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
 </div>
+
 
 
 <div class="slide">
@@ -434,7 +441,7 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 
 <div class="slide">
 <h1>Threads, this time with commitment.</h1>
-<p>The idea of Software Transactional Memory(STM) was worked out in the early 2000's by Simon Peyton Jones, Tim Harris, Maurice Herlihy, and Simon Marlow and implemented as a library in Haskell, and then in many other languages. It works much like the idea of database transactions: a block of code is executed atomically, and like a transaction, it either commits or fails(and be retried until it eventually succeeds). It is composable and eliminates data races, deadlocks, and other concurrency bugs. It is not without it's critics (and implementation difficulties, see this <a href="http://joeduffyblog.com/2010/01/03/a-brief-retrospective-on-transactional-memory/">piece</a> by Joe Duffy about STM in .Net.</p>
+<p>The idea of Software Transactional Memory(STM) was worked out in the early 2000's by Simon Peyton Jones, Tim Harris, Maurice Herlihy, and Simon Marlow and implemented as a library in Haskell, and then in many other languages. It works much like the idea of database transactions: a block of code is executed atomically, and like a transaction, it either commits or fails(and can be retried until it eventually succeeds). It is composable and eliminates data races, deadlocks, and other concurrency bugs. It is not without it's critics (and implementation difficulties, see this <a href="http://joeduffyblog.com/2010/01/03/a-brief-retrospective-on-transactional-memory/">piece</a> by Joe Duffy about STM in .Net), but it can greatly simplify concurrent programming.</p>
 
 <p>In Haskell, STM is implemented in the <code>Control.Concurrent.STM</code> package, and consider this reimplementation of draining from one counter to another:</p>
 <pre><code class="haskell">import Control.Concurrent
@@ -462,6 +469,8 @@ drain name source sink lock = do
 
 milliSleep = threadDelay . (*) 1000</code></pre>
 </div>
+
+
 
 <div class="slide">
 <h1>Software Transactional Memory drains</h1>
@@ -510,15 +519,16 @@ draining b 10, 5
 draining a 5, 10
 draining a 5, 10
 draining b 10, 5
-draining a 5, 10
-ghc: sendWakeup: invalid argument (Bad file descriptor)</pre></p>
+draining a 5, 10</pre></p>
 
 <p>So wait, this will just keep going like this no matter how long we delay? Each drain is trying to completely 0 the opposite counter, since they are both moving fairly quickly, and working against each other, neither is going to win (since now they aren't deadlocking and livelocking each other). However, I did have a lock in this, which you might argue is helping me(to be fair to me, locks didn't help me in the other two versions). I did have a version with no lock which behaved the same, except, since both threads were writing logging information to <code>stdout</code>, I got a jumbled mess of interleaved messages. I added the lock so that <code>putStrLn</code> would not jumble the status messages. After all, how else was I going to get output to paste into a slide? Feel free to remove the lock at home. Or, perhaps more fun, refactor the program to use STM to send logging messages to another thread that prints out the messages for us one at a time...</p>
 </div>
 
+
+
 <div class="slide">
 <h1>Sugar free Software Transactional Memory drains</h1>
-<p>The idea that we combine things with functions is something I want to emphasize. And that is exactly what the Haskell version of this problem did. However, Haskell actually has a couple of things that can obscure this. Namely, what is called "do-notation" is fancy syntax for making an anonymous function and passing it to a function named <code>>>=</code>. Now <code>>>=</code> is often termed an "operator" in Haskell, but operators are just two parameter functions that can be used "infix style". You can just call them like a normal function by wrapping them in parenthesis and passing arguments to them, like so: <code>(>>=) a b</code>. That would apply the function <code>>>=</code> to the parameters <code>a</code> and <code>b</code>. The fact that Haskell allows nearly any symbol to be used in function names, not just letters, can obscure this if you're used to other languages. Also, anonymous functions are expressed like so: <code>(\param1 -> expression)</code>. The backslash is meant to look like a &lambda; because anonymous functions in the lambda calculus are denoted with &lambda;. One of the first steps the Haskell compiler does is "desugar" do-notation. So, without further ado, here is a "desugared" version of the exact same code from the previous page. So now you can see that: a) It's just function calls, b) Haskell is just a LISP in disguise<sup>[1]</sup>.</p>
+<p>The idea that we combine things with functions is something I want to emphasize. And that is exactly what the Haskell version of this problem did. However, Haskell actually has a couple of things that can obscure this. Namely, what is called "do-notation" is fancy syntax for making an anonymous function and passing it to a function named <code>>>=</code>. Now <code>>>=</code> is often termed an "operator" in Haskell, but operators are just two parameter functions that can be used "infix style". You can just call them like a normal function by wrapping them in parenthesis and passing arguments to them, like so: <code>(>>=) a b</code>. That would apply the function <code>>>=</code> to the parameters <code>a</code> and <code>b</code>. The fact that Haskell reserves some non-character symbols so it can distinguish "operators" from "normal function names", can obscure this if you're used to other languages. Also, anonymous functions are expressed like so: <code>(\param -> expression)</code>. The backslash is meant to look like a &lambda; because anonymous functions in the lambda calculus are denoted with &lambda;. One of the first steps the Haskell compiler does is "desugar" do-notation. So, without further ado, here is a "desugared" version of the exact same code from the previous page. So now you can see that: a) It's just function calls, b) Haskell is just a LISP in disguise<sup>[1]</sup>.</p>
 <pre><code class="haskell">import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
@@ -603,6 +613,9 @@ milliSleep time = threadDelay ((*) 1000 time)</code></pre>
 
 
 <div class="slide">
+<h1>Loops</h1>
+<p></p>
+
 TO DO loop fusion map/fold/reduce examples
 </div>
 
@@ -819,12 +832,15 @@ TO DO
 </div>
 
 
+
 <div class="slide">
 <h1>Abstract Algebra</h1>
 <p>Elementary algebra looks at symbol manipulation involving operations over numbers. Abstract algebra is the branch of the mathematics that looks at generalized versions of these ideas over different structures, and identifies recurring patterns. From a programming perspective, this is a bit like "duck typing". The general forms(groups, rings, fields, lattices) are identified by the basic properties they have. Once an object is identified with these rules, one can reason about the abstract forms with little regard for the underlying specific instance.</p>
 
 <p>Another way of stating this: Abstract algebra is rarely concerned with concrete examples of algebraic structures, but with the structures themselves. Because of this, it focuses on universal properties, and invariants, that apply to these structures, and universal ways of combining, and composing these structures.</p>
 </div>
+
+
 
 <div class="slide">
 <h1>Abstract Algebra</h1>
@@ -871,6 +887,8 @@ TO DO
 	<dd>Okay, that makes... hey wait a minute...</dd>
 </dl>
 </div>
+
+
 
 <div class="slide">
 <h1>Composition of pure functions</h1>
@@ -1025,6 +1043,7 @@ The problem that the Y Combinator solves is that <code>fib</code> is used inside
 </div>
 
 
+
 <div class="slide">
 <h1>Category Theory</h1>
 
@@ -1051,7 +1070,7 @@ The problem that the Y Combinator solves is that <code>fib</code> is used inside
 <p>My talk has been on ideas from Abstract Algebra. Many of these ideas can (and are) reexpressed in terms of Category Theory to explain concepts from category theory like Monads: which as the (humorous) quote from the second slide observed are merely <em>a Monoid in the Category of the Endofunctors</em>. Even without exploring Category theory, you should now be able to see that this is probably talking about a monoid: an operator on a collection of items that is associative, and has an identity element from the collection, and that it the collection of objects, and that the objects are a higher order function that preserves identity and composition of functions, and the higher order function has the same domain and codomain.</p>
 
 <h2>Monad Laws</h2>
-<p>On the Haskell Wiki, you will see that Monad's must meet the requirements of the <a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a>. This matters because Haskell's type system is not capable of proving that the functions involved follow those rules. However, if you scroll down to the bottom of that page, you'll see the laws cast in terms of a function called <code>>=></code>(the Kleisli composition operator), and a function called <code>return</code>:
+<p>On the Haskell Wiki, you will see that Monad's must meet the requirements of the <a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a>. One reason this matters is because Haskell's type system is not capable of proving that the functions involved follow those rules. However, if you scroll down to the bottom of that page, you'll see the laws recast in terms of a function called <code>>=></code>(the Kleisli composition operator), and a function called <code>return</code>:
 <pre><code class="haskell">return >=> g &equiv; g
 f >=> return &equiv; f
 (f >=> g) >=> h &equiv; f >=> (g >=> h)</code></pre>
@@ -1059,6 +1078,8 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 
 <p>This talk was not meant to be a secret "monad tutorial". In fact, I don't want you to take away how to use or define monads. Instead...</p>
 </div>
+
+
 
 <div class="slide">
 <h1>Monads</h1>
@@ -1066,7 +1087,7 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 <p>My talk has been on ideas from Abstract Algebra. Many of these ideas can (and are) reexpressed in terms of Category Theory to explain concepts from category theory like Monads: which as the (humorous) quote from the second slide observed are merely <em>a Monoid in the Category of the Endofunctors</em>. Even without exploring Category theory, you should now be able to see that this is probably talking about a monoid: an operator on a collection of items that is associative, and has an identity element from the collection, and that it the collection of objects, and that the objects are a higher order function that preserves identity and composition of functions, and the higher order function has the same domain and codomain.</p>
 
 <h2>Monad Laws</h2>
-<p>On the Haskell Wiki, you will see that Monad's must meet the requirements of the <a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a>. This matters because Haskell's type system is not capable of proving that the functions involved follow those rules. However, if you scroll down to the bottom of that page, you'll see the laws cast in terms of a function called <code>>=></code>(the Kleisli composition operator), and a function called <code>return</code>:
+<p>On the Haskell Wiki, you will see that Monad's must meet the requirements of the <a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a>. One reason this matters is because Haskell's type system is not capable of proving that the functions involved follow those rules. However, if you scroll down to the bottom of that page, you'll see the laws recast in terms of a function called <code>>=></code>(the Kleisli composition operator), and a function called <code>return</code>:
 <pre><code class="haskell">return >=> g &equiv; g
 f >=> return &equiv; f
 (f >=> g) >=> h &equiv; f >=> (g >=> h)</code></pre>
@@ -1074,15 +1095,17 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 
 <p>This talk was not meant to be a secret "monad tutorial". In fact, I don't want you to take away how to use or define monads. Instead...</p>
 
-<h1>Monads are about composition operators that preserve correctness within a particular universe of computation.</h1>
-<p>In other words, when we define operators for composing things that preserve invariants or maintain some idea about correctness, it might be a monad. So it's yet another tool for talking about ways to compose things out of other things. I want to point out something important: <strong>Monads have nothing to do with side effects or I/O. Monads are a mathematical object that just "is".</strong> Now, because they are associative, they provide a framework for reasoning about things that require a degree of ordering and work with pure functions. Of course, Mathematically, impure functions don't exist (go back to the slide about "world passing style"...), so this is a bit of a redundant statement. But in a language like Haskell which only has pure functions(the first rule of <code>unsafePerformIO</code> is that we do not talk about <code>unsafePerformIO</code>) this turns out to be handy since, you know, side effects are useful. Monads are used as a general structuring principle in Haskell, much like <code>java.lang.Iterable</code> is used in Java programs, and Promises are in JavaScript.</p>
+<h2>Monads are about composition operators that preserve structure.</h2>
+<p>In other words, when we define operators for composing things that preserve invariants or maintain some idea about correctness, it might be a monad. So it's yet another tool for talking about ways to compose things out of other things. I want to point out something important: <strong>Monads have nothing to do with side effects or I/O. Monads are a mathematical object that just "is".</strong> Now, because they are associative, they provide a framework for reasoning about things that require a degree of ordering and work with pure functions. Of course, Mathematically, impure functions don't exist (go back to the slide about "world passing style"...), so this is a bit of a redundant statement. But in a language like Haskell which only has pure functions(the first rule of <code>unsafePerformIO</code> is that we do not talk about <code>unsafePerformIO</code>) this turns out to be handy since, you know, side effects are useful, but it goes beyond that, since Monads are used as one (of several) general structuring principle in Haskell.</p>
 </div>
+
+
 
 <div class="slide">
 <h1>A personal opinion</h1>
-<p>I like category theory just fine, and it really is applicable to problems in computing. I think, however, that it gets overemphasized it's easy to latch on to it's terminology. You can use <em>algebraic</em> reasoning about code without resorting to category theory. The reason I brought it into this talk is that in exploring functional programming, you're going to come into contact with it. Studying it can, in the longer run, provide insights into universal computational structures. But if it's discouraging you from exploring functional programming, do not let it hold you back. In fact, it would probably make more sense to study the topic <em>after</em> you have explored functional programming for a while.</p>
+<p>I like category theory just fine, and it really is applicable to problems in computing. I think, however, that it gets overemphasized in some circles, and it's easy to latch on to it's terminology. You can use <em>algebraic</em> reasoning about code without resorting to category theory(although to be fair, a Category Theorist would state taht algebraic resasoning is the essence of Category Theory). Studying Category Theory will, in the longer run, provide insights into universal computational structures; however, if it's discouraging you from exploring functional programming, do not let it hold you back. In fact, it would probably make more sense to study the topic <em>after</em> you have explored functional programming for a while.</p>
 
-<p>In fact, Monads are not even the only compositionally correct mathematical tool for reasoning about side effects<sup>[1]</sup>. In fact, as one criticism points out, composing monads themselves is actually tricky. Uniqueness types(also called linear types) are another popular approach to reason about side effects. They are not as universal as monads, but this makes it a lot simpler. Of course, I suspect many of you are already at least aware of uniqueness typing: it's part of the theoretical basis for Rust's Ownership types. So, by all means, study category theory, unless you find yourself overwhelmed and discouraged from exploring functional programming, then, do not worry about it. There's always time for it later, and there are quite a few things to explore that will make it easier return to later.</p>
+<p>In fact, Monads are not even the only compositionally correct mathematical tool for reasoning about side effects<sup>[1]</sup>. Uniqueness types(also called linear types) are another popular approach to reason about side effects. They are not as universal as monads, but this also makes them a lot simpler. Of course, I suspect many of you are already at least aware of uniqueness typing: it's part of the theoretical basis for Rust's Ownership types. So, by all means, study category theory, unless you find yourself overwhelmed and discouraged from exploring functional programming, then, do not worry about it. There's always time for it later, and there are quite a few things to explore that will make it easier return to later.</p>
 
 <p>[1] For criticisms of monads from respectable computer scientists who know their stuff, consider these two links: <a href="https://dl.dropboxusercontent.com/u/40457956/haskell_sucks.pdf">Haskell Sucks!</a> by Paul Bone and <a href="http://fexpr.blogspot.com/2011/12/trouble-with-monads.html">The trouble with monads</a> by John Shutt.</p>
 </div>
@@ -1306,9 +1329,14 @@ https://homotopytypetheory.org/blog/
 	<li><a href="http://okmij.org/ftp/Computation/monadic-shell.html">Monadic i/o and UNIX shell programming</a></li>
 	<li><a href="https://dl.dropboxusercontent.com/u/40457956/haskell_sucks.pdf">Haskell Sucks!</a>, Paul Bone</li>
 	<li><a href="http://fexpr.blogspot.com/2011/12/trouble-with-monads.html">The trouble with monads</a>, John Shutt</li>
+	<li><a href="http://comonad.com/reader/2009/recursion-schemes/">Recursion Schemes: A Field Guide</a></li>
 </ul>
 
+<h2>Haskell</h2>
+<ul>
+	<li><a href="https://wiki.haskell.org/Do_notation_considered_harmful">Do Notation Considered Harmful</a></li>
+	<li><a href="http://www.haskellforall.com/2014/10/how-to-desugar-haskell-code.html">How to desugar Haskell code</a></li>
+</ul>
 </div>
-
 </body>
 </html>
