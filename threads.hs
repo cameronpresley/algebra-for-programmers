@@ -18,11 +18,11 @@ drain name source sink lock = do
     withMVar lock $ \_ -> putStrLn $ "draining " ++ name ++ " " ++ (show from) ++ ", " ++ (show to)
     if from > 0
         then
-            (atomically $ (drainOne source sink)) >> milliSleep 1 >> (drain name source sink lock)
+            (atomically $ drainOne source sink) >> milliSleep 1 >> (drain name source sink lock)
         else return ()
 
 
-oneDrain lock ctr1 ctr2 = do
+oneDrain lock ctr1 ctr2 =
     forkIO $ drain "a" ctr1 ctr2 lock
 
 twoDrains lock ctr1 ctr2 = do

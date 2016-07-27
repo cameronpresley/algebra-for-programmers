@@ -58,4 +58,4 @@ main =
                                 --(twoDrains lock ctr1 ctr2)
                                 (\_ -> (milliSleep 60)))))))))
 
-milliSleep = threadDelay . ((*) 1000)
+milliSleep time = threadDelay ((*) 1000 time)

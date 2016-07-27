@@ -579,7 +579,7 @@ main =
                                 --(twoDrains lock ctr1 ctr2)
                                 (\_ -> (milliSleep 60)))))))))
 
-milliSleep = threadDelay . ((*) 1000)</code></pre>
+milliSleep time = threadDelay ((*) 1000 time)</code></pre>
 <p>[1] LISP = Lots of Infernal Stupid Parenthesis</p>
 </div>
 
