@@ -26,7 +26,7 @@
 <div class="slide">
 	<h1>Algebra for Programmers</h1>
 	<h2>Emily Estes</h2>
-	<h3>2016-??-?? @ Functional Knox Meetup</h3>
+	<h3>2016-07-29 @ Functional Knox Meetup</h3>
 	<p>To navigate: left arrow - previous slide, right arrow - next slide, escape - toggle slide show mode.</p>
 </div>
 
@@ -124,8 +124,15 @@
 
 
 <div class="slide">
-<h1>So let's go back to combining programs... I mean functions. You said we're going to use functions?</h1>
+<h1>Question: So let's go back to combining programs... I mean functions. You said we're going to use functions?</h1>
 
+</div>
+
+
+
+<div class="slide">
+<h1>Question: So let's go back to combining programs... I mean functions. You said we're going to use functions?</h1>
+<h1>Answer: Let's take a look at an example program...</h1>
 </div>
 
 
@@ -374,13 +381,23 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 <h1>Composing threads</h1>
 <p>Multithreaded programs have an interesting property. We can write correct multithreaded programs, and then combine them with other multithreaded programs, that are also correct, and there is no guarantee that larger combined program will be correct. This goes way beyond mutable state. And while some programs assign numerical values to locks and use the ordering imposed by the integer values on locks to have a canonical locking order, there are still other bugs that regularly occur. Many result in security issues, for instance data races in authentication and e-commerce systems in nearly every major web service have lead to exploitable bugs that resulted in users being able to impersonate other users, double spend transactions, and much more.</p>
 
-<p>I have a claim.</p>
-<h1>Mulithreaded programming is hard because there is no composition operator that preserves correctness when combining two correct multithreaded programs.</h1>
+<p>So with that in mind, I have a claim.</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Composing threads</h1>
+<p>Multithreaded programs have an interesting property. We can write correct multithreaded programs, and then combine them with other multithreaded programs, that are also correct, and there is no guarantee that larger combined program will be correct. This goes way beyond mutable state. And while some programs assign numerical values to locks and use the ordering imposed by the integer values on locks to have a canonical locking order, there are still other bugs that regularly occur. Many result in security issues, for instance data races in authentication and e-commerce systems in nearly every major web service have lead to exploitable bugs that resulted in users being able to impersonate other users, double spend transactions, and much more.</p>
+
+<p>So with that in mind, I have a claim.</p>
+<h1>Traditional mulithreaded programming is hard because there is no composition operator that preserves correctness when combining two correct multithreaded programs.</h1>
 
 <p>Actor concurrency, with "shared nothing" memory, is a great and useful thing, but even with it you can still write programs using actors that can not be combined without bugs(like deadlock, livelock, and friends).</p>
 </div>
 
 
+
 <div class="slide">
 <h1>Question: So wait, that was an example of combining two "smaller" programs into a "bigger" program using functions?</h1>
 </div>
@@ -409,7 +426,7 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 <h1>Answer:</h1>
 <p>That's because our function that performed the composition lacked a useful property. It didn't "preserve correctness". Ideally, a composition operator(aka function) will preserve some "invariant". However, we can define different invariants that prove different things.</p>
 
-<p>In fact, one of the insights functional programming has helped bring to the world was the idea that composition should preserve some type of "correctness property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
+<p>In fact, one of the insights functional programming has helped bring to the world was the idea that composition should preserve some type of "correctness" property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
 </div>
 
 
@@ -421,7 +438,7 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 <h1>Answer:</h1>
 <p>That's because our function that performed the composition lacked a useful property. It didn't "preserve correctness". Ideally, a composition operator(aka function) will preserve some "invariant". However, we can define different invariants that prove different things.</p>
 
-<p>In fact, one of the insights functional programming has helpd bring to the world was the idea that composition should preserve some type of "correctness property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
+<p>In fact, one of the insights functional programming has helpd bring to the world was the idea that composition should preserve some type of "correctness" property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
 <h1>Question: My head is hurting again...</h1>
 </div>
 
@@ -432,7 +449,7 @@ counter &lt;0.46.0> locking for &lt;0.48.0>: 10
 <h1>Answer:</h1>
 <p>That's because our function that performed the composition lacked a useful property. It didn't "preserve correctness". Ideally, a composition operator(aka function) will preserve some "invariant". However, we can define different invariants that prove different things.</p>
 
-<p>In fact, one of the insights functional programming has helpd bring to the world was the idea that composition should preserve some type of "correctness property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
+<p>In fact, one of the insights functional programming has helpd bring to the world was the idea that composition should preserve some type of "correctness" property. Many research projects have been started to find operators that do preserve correctness. For instance, let's consider another way to write the previous example using <a href="https://bartoszmilewski.com/2010/09/11/beyond-locks-software-transactional-memory/">Software Transactional Memory</a></p>
 <h1>Question: My head is hurting again...</h1>
 <h1>Answer: Let's rollback...</h1>
 </div>
@@ -528,7 +545,7 @@ draining a 5, 10</pre></p>
 
 <div class="slide">
 <h1>Sugar free Software Transactional Memory drains</h1>
-<p>The idea that we combine things with functions is something I want to emphasize. And that is exactly what the Haskell version of this problem did. However, Haskell actually has a couple of things that can obscure this. Namely, what is called "do-notation" is fancy syntax for making an anonymous function and passing it to a function named <code>>>=</code>. Now <code>>>=</code> is often termed an "operator" in Haskell, but operators are just two parameter functions that can be used "infix style". You can just call them like a normal function by wrapping them in parenthesis and passing arguments to them, like so: <code>(>>=) a b</code>. That would apply the function <code>>>=</code> to the parameters <code>a</code> and <code>b</code>. The fact that Haskell reserves some non-character symbols so it can distinguish "operators" from "normal function names", can obscure this if you're used to other languages. Also, anonymous functions are expressed like so: <code>(\param -> expression)</code>. The backslash is meant to look like a &lambda; because anonymous functions in the lambda calculus are denoted with &lambda;. One of the first steps the Haskell compiler does is "desugar" do-notation. So, without further ado, here is a "desugared" version of the exact same code from the previous page. So now you can see that: a) It's just function calls, b) Haskell is just a LISP in disguise<sup>[1]</sup>.</p>
+<p>The idea that we combine things with functions is something I want to emphasize. And that is exactly what the Haskell version of this problem did(as did the Java and Erlang versions, but they used a different primitive than the STM Monad). However, Haskell actually has a couple of things that can obscure this. Namely, what is called "do-notation" is fancy syntax for making an anonymous function and passing it to a function named <code>>>=</code>. Now <code>>>=</code> is often termed an "operator" in Haskell, but operators are just two parameter functions that can be used "infix style". You can just call them like a normal function by wrapping them in parenthesis and passing arguments to them, like so: <code>(>>=) a b</code>. That would apply the function <code>>>=</code> to the parameters <code>a</code> and <code>b</code>. The fact that Haskell reserves some non-character symbols so it can distinguish "operators" from "normal function names", can obscure this if you're used to other languages. Also, anonymous functions are expressed like so: <code>(\param -> expression)</code>. The backslash is meant to look like a &lambda; because anonymous functions in the lambda calculus are denoted with &lambda;. One of the first steps the Haskell compiler does is "desugar" do-notation. So, without further ado, here is a "desugared" version of the exact same code from the previous page. So now you can see that: a) It's just function calls, b) Haskell is just a LISP in disguise<sup>[1]</sup>.</p>
 <pre><code class="haskell">import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad
@@ -618,6 +635,7 @@ milliSleep time = threadDelay ((*) 1000 time)</code></pre>
 
 TO DO loop fusion map/fold/reduce examples
 </div>
+ 
 
 
 
@@ -828,7 +846,13 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 
 <div class="slide">
 <h1>Transitivity</h1>
-TO DO
+<p>One interesting property that some binary relations possess is "transitivity". The transitive property of an operator &leq; is simply that:<br />
+<code>if a &leq; b and b &leq; c, then a &leq; c</code></p>
+
+<p>While this property naturally lends itself to operators like "less than or equals", we can apply this to many properties. A classic example is the <code>modulus</code> operator. Given an integer <code>n</code>, two numbers, <code>a</code> and <code>b</code> are said to be "related"(or "congruent") if <code>a mod n = b mod n</code>. For instance, with <code>n = 5, a = 3, and b = 8</code>, we can look at <code>3 mod 5 = 3, 8 mod 5 = 3</code>. So 3 and 8 are "congruent mod 5". With 8 and 13, we would find that they are also congruent, and by extension, 3 and 13 are as well.</p>
+
+<h2>Transitive Closures</h2>
+<p>Given a set and a transitive relation, we can take the "transitive closure" of an element. For instance, we can take all the integers <code>x</code>, such that <code>x mod 5 = 3</code>. This transitive closure process will generate a set. It is interesting to realize that if we do this for each unique set, we will generate a collection of sets where the union of the sets will give us back our original set. Again, given <code>integers mod 5</code>, we will generate 5 such sets: <code>{ x &Element; &integers; &VerticalBar; x mod 5 = 0 }</code>, <code>{ x &Element; &integers; &VerticalBar; x mod 5 = 1 }</code>, <code>{ x &Element; &integers; &VerticalBar; x mod 5 = 2 }</code>, <code>{ x &Element; &integers; &VerticalBar; x mod 5 = 3 }</code>, and <code>{ x &Element; &integers; &VerticalBar; x mod 5 = 4 }</code>. We call these generated sets <strong>Equivalence Classes</strong>. The set of equivalence classes generated by an operation is interesting to consider, and we will come back to this.</p>
 </div>
 
 
@@ -961,15 +985,33 @@ In fact, we can generalize this idea to any semigroup: create a new element that
 
 
 <div class="slide">
+<h1>Quotient Monoids</h1>
+<p>Earlier we discussed the notion of equivalence classes and transitive closures. We can use this idea to generate a new Monoid from an existing Monoid. This can also be used to connect two existing Monoids provided we follow the rules. So, consider a function that maps elements Monoid <code>A</code> into Monoid <code>B</code>: <code>f(a) = b where a &Element; A, b &Element; B</code>. But we don't want to look at just any such function, instead, we want to consider a funtion that <em>preserves structre</em>. In the case of monoids, the structure is that they have an identity element, and an associative operation that we'll call <code>&CircleTimes;</code>. Elements and operations from each Monoid will be subscripted. So to preserve the structure, our function <code>f :: A -> B</code> should follow these rules:<br />
+<code>f(x &CircleTimes;<sub>A</sub> y) = f(x) &CircleTimes;<sub>B</sub> f(y) (maps the operator)<br />
+f(1<sub>A</sub>) = 1<sub>B</sub> (preserves identity)<br />
+Domain(f) = A<br/ >
+Codomain(f) = B</code></p>
+
+<p>A function that follows these rules can be said to be a <strong>Monoid Homomorphism</strong>
+
+<h2>Modular Arithmetic</h2>
+<p>For the sake of example. Recall that the modulus operator for a given constant <code>N</code> generates a set of <code>N</code> equivalence classes on the integers. If we take <code>f(x) = x mod N</code> as our function, we can observe it follows those rules, and creates a new "Quotient Monoid" from the integers. (Addition and identity are preserved "mod N", and it maps every integer to 0 to 4). There is a general principle here: We can use equivalence relations (as long as they preserve the "operator" across the classes generated) on a Monoid to generate a new "Quotient Monoid" from the original.</p>
+
+<p>The beauty of abstract algebra is that this works for <em>any</em> Monoid.</p>
+</div>
+
+
+
+<div class="slide">
 <h1>Lattices</h1>
 <p>A lattice is an algebraic structure, like monoids, and semigroups, however, it is based on a binary relation that we will call a "partial order". To start with a simple example, &le;, the relation less-than-or-equal, on the integers is an ordering of the integers. In fact, lattices are a generalization of this concept of a sequence.</p>
 
 <p>To be a partial order, a relation, called &le; here, must follow some rules:</p>
 <code>a &le; a (reflexive)<br/>
 if a &le; b and b &le; c then a &le; c (transitive)<br />
-if a &le; b and b &le; a then a = b (antisymmetry)</code>
+if a &le; b and b &le; a then a = b (antisymmetry, this is also what separates an equivalence relation from a partial order)</code>
 
-<p>In general, given a partial order, the top and bottom element of the set is denoted as "top"(&top;) and "bot"(&bot;). Informally this feels like positive and negative infinity, but this avoids the problems with infinity, and works well more abstract lattices.</p>
+<p>In general, given a partial order, the top and bottom element of the set is denoted as "top"(&top;) and "bot"(&bot;). Informally this feels like positive and negative infinity, but this avoids the problems with infinity, and works well for more abstract lattices.</p>
 
 <h2>Types</h2>
 <p>We can construct lattices of more than just numbers though. For instance, we can understand algebraic data types through the lens of lattices via the binary relation "is a subtype of", written as "<code>&lt;:</code>".</p>
@@ -983,7 +1025,7 @@ if a &le; b and b &le; a then a = b (antisymmetry)</code>
 <h1>Cantor and the development of modern mathematics.</h1>
 <p>Before we continue with more dense formalisms, I want to take a break to talk about the history of mathematics. Georg Cantor was a mathematician who lived between 1845 and 1918. If you've heard of the Cantor Set, this is the same Cantor (and that set has applications outside of pretty pictures of fractals, in particular, it's a useful example for measure theory in analysis).</p>
 
-<p>In 1891, Cantor came out with a proof which set the world of Mathematics ablaze and arguments over his work helped develop modern mathematics. His proof was a deceptively simple discussion of the cardinality(read <strong>size</strong>) of infinite sets. In particular, the first part of his proof showed that the natural numbers(1, 2, 3, and so on), are the "same size" as the integers(0, 1, -1, 2, -2, and so on). Now, we would say he made a "one to one and onto mapping" between these sets. He also showed that the rational numbers(ratios of integers) were the same size. So far, everyone was with him, however, when we he got to the Real numbers(which include the irrationals, like &pi; and the &radic;2 and so on, which, is itself difficult tricky to define), he proved that there is no such mapping. That one can say that there are infinitely more "real numbers" than rationals, the "size" of the reals is a bigger infinity than the infinitely large size of the rationals.</p>
+<p>In 1891, Cantor came out with a proof which set the world of Mathematics ablaze and arguments over his work helped develop modern mathematics. His proof was a deceptively simple discussion of the cardinality(read <strong>size</strong>) of infinite sets. In particular, the first part of his proof showed that the natural numbers(1, 2, 3, and so on), are the "same size" as the integers(0, 1, -1, 2, -2, and so on). Now, we would say he made a "one to one and onto mapping" between these sets. He also showed that the rational numbers(ratios of integers) were the same size. So far, everyone was with him, however, when we he got to the Real numbers(which include the irrationals, like &pi; and the &radic;2 and so on, which, is itself tricky to define), he proved that there is no such mapping. That one can say that there are infinitely more "real numbers" than rationals, the "size" of the reals is a bigger infinity than the infinitely large size of the rationals.</p>
 
 <p>This immediately started a <a href="https://en.wikipedia.org/wiki/Controversy_over_Cantor%27s_theory">storm of controversy</a> about the validity of his proof, and the counter-intuitive observation that there could be different "sizes" of infinity, and lead to such important question as "what exactly IS a proof anyway?".</p>
 
@@ -1034,7 +1076,7 @@ The problem that the Y Combinator solves is that <code>fib</code> is used inside
 <pre><code class="haskell">data Tree a = EmptyTree | Node a (Tree a) (Tree a)</code></pre>
 <code>Tree</code> is used in the definition of <code>Tree</code>. Basically, the Y Combinator is used to define the formal semantics of these constructions behind the scenes. Another way of stating it: it allows anonymous functions to express self-reference(i.e. achieve recursion) even though we don't have "names". (One should also note, self reference is one consequence of Turing Completeness, in other words, <em>every</em> Turing Complete language has a fixed point function of some sort.)</p>
 
-<p>So, fixed points of higher order functions are interesting, and a worthwhile thing to study, but are not often needed directly in day to day coding. (Or rather, if it is something you find yourself doing in "regular code", much like hand performing a translation of a program to continuation passing style, it is a sign that you should consider ask questions about the nature of the code you're writing and whether there is a way to exploit the language you are using to perform this sort of operation for you.) Mostly I am not trying to discourage this, but rather point out that going through a discussion like <a href="https://www.dreamsongs.com/Files/WhyOfY.pdf">The Why of Y</a> will take a couple of hours, a whiteboard, and possibly a mutiny of you convince a bunch of undergraduate Computer Science students that it's a fun way to spend a Thursday evening<sup>[2]</sup>.</p>
+<p>So, fixed points of higher order functions are interesting, and a worthwhile thing to study, but are not often needed directly in day to day coding. (Or rather, if it is something you find yourself doing in "regular code", much like hand performing a translation of a program to continuation passing style, it is a sign that you should consider ask questions about the nature of the code you're writing and whether there is a way to exploit the language you are using to perform this sort of operation for you.) Mostly I am not trying to discourage this, but rather point out that going through a discussion like <a href="https://www.dreamsongs.com/Files/WhyOfY.pdf">The Why of Y</a> will take a couple of hours, a whiteboard, and possibly a mutiny if you convince a bunch of undergraduate Computer Science students that it's a fun way to spend a Thursday evening<sup>[2]</sup>.</p>
 
 <p>[1] The startup accelerator Y Combinator is a company that bootstraps companies, and it's name is a play on the fact they are a "recursive" company. Yes, this is another instance of lambda calculus derived humor.</p>
 <p>[2] I may or may not have done this in college.<sup>[3]</sup></p>
@@ -1067,7 +1109,7 @@ The problem that the Y Combinator solves is that <code>fib</code> is used inside
 <div class="slide">
 <h1>Monads</h1>
 
-<p>My talk has been on ideas from Abstract Algebra. Many of these ideas can (and are) reexpressed in terms of Category Theory to explain concepts from category theory like Monads: which as the (humorous) quote from the second slide observed are merely <em>a Monoid in the Category of the Endofunctors</em>. Even without exploring Category theory, you should now be able to see that this is probably talking about a monoid: an operator on a collection of items that is associative, and has an identity element from the collection, and that it the collection of objects, and that the objects are a higher order function that preserves identity and composition of functions, and the higher order function has the same domain and codomain.</p>
+<p>My talk has been on ideas from Abstract Algebra. Many of these ideas can (and are) reexpressed in terms of Category Theory to explain concepts from category theory like Monads: which as the (humorous) quote from the second slide observed are merely <em>a Monoid in the Category of the Endofunctors</em>. Even without exploring Category theory, you should now be able to see that this is probably talking about a monoid: an operator on a collection of items that is associative, and has an identity element from the collection, and that the operator is a higher order function that preserves identity and composition of functions, and the higher order function has the same domain and codomain.</p>
 
 <h2>Monad Laws</h2>
 <p>On the Haskell Wiki, you will see that Monad's must meet the requirements of the <a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a>. One reason this matters is because Haskell's type system is not capable of proving that the functions involved follow those rules. However, if you scroll down to the bottom of that page, you'll see the laws recast in terms of a function called <code>>=></code>(the Kleisli composition operator), and a function called <code>return</code>:
@@ -1084,7 +1126,7 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 <div class="slide">
 <h1>Monads</h1>
 
-<p>My talk has been on ideas from Abstract Algebra. Many of these ideas can (and are) reexpressed in terms of Category Theory to explain concepts from category theory like Monads: which as the (humorous) quote from the second slide observed are merely <em>a Monoid in the Category of the Endofunctors</em>. Even without exploring Category theory, you should now be able to see that this is probably talking about a monoid: an operator on a collection of items that is associative, and has an identity element from the collection, and that it the collection of objects, and that the objects are a higher order function that preserves identity and composition of functions, and the higher order function has the same domain and codomain.</p>
+<p>My talk has been on ideas from Abstract Algebra. Many of these ideas can (and are) reexpressed in terms of Category Theory to explain concepts from category theory like Monads: which as the (humorous) quote from the second slide observed are merely <em>a Monoid in the Category of the Endofunctors</em>. Even without exploring Category theory, you should now be able to see that this is probably talking about a monoid: an operator on a collection of items that is associative, and has an identity element from the collection, and that the operator is a higher order function that preserves identity and composition of functions, and the higher order function has the same domain and codomain.</p>
 
 <h2>Monad Laws</h2>
 <p>On the Haskell Wiki, you will see that Monad's must meet the requirements of the <a href="https://wiki.haskell.org/Monad_laws">Monad Laws</a>. One reason this matters is because Haskell's type system is not capable of proving that the functions involved follow those rules. However, if you scroll down to the bottom of that page, you'll see the laws recast in terms of a function called <code>>=></code>(the Kleisli composition operator), and a function called <code>return</code>:
@@ -1103,7 +1145,7 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 
 <div class="slide">
 <h1>A personal opinion</h1>
-<p>I like category theory just fine, and it really is applicable to problems in computing. I think, however, that it gets overemphasized in some circles, and it's easy to latch on to it's terminology. You can use <em>algebraic</em> reasoning about code without resorting to category theory(although to be fair, a Category Theorist would state taht algebraic resasoning is the essence of Category Theory). Studying Category Theory will, in the longer run, provide insights into universal computational structures; however, if it's discouraging you from exploring functional programming, do not let it hold you back. In fact, it would probably make more sense to study the topic <em>after</em> you have explored functional programming for a while.</p>
+<p>I like category theory just fine, and it really is applicable to problems in computing. I think, however, that it gets overemphasized in some circles, and it's easy to latch on to its terminology. You can use <em>algebraic</em> reasoning about code without resorting to category theory(although to be fair, a Category Theorist would state that algebraic resasoning is the essence of Category Theory). Studying Category Theory will, in the longer run, provide insights into universal computational structures; however, if it's discouraging you from exploring functional programming, do not let it hold you back. In fact, it would probably make more sense to study the topic <em>after</em> you have explored functional programming for a while.</p>
 
 <p>In fact, Monads are not even the only compositionally correct mathematical tool for reasoning about side effects<sup>[1]</sup>. Uniqueness types(also called linear types) are another popular approach to reason about side effects. They are not as universal as monads, but this also makes them a lot simpler. Of course, I suspect many of you are already at least aware of uniqueness typing: it's part of the theoretical basis for Rust's Ownership types. So, by all means, study category theory, unless you find yourself overwhelmed and discouraged from exploring functional programming, then, do not worry about it. There's always time for it later, and there are quite a few things to explore that will make it easier return to later.</p>
 
@@ -1113,7 +1155,7 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 
 <div class="slide">
 <h1>Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</h1>
-<p>In 1977 (almost 40 years ago), the ACM awarded John Backus(yes, the "B" in Backus-Naur Form(BNF), the John Backus who helped INVENT and define Fortran AND Algol. As part of that award he delivered a lecture and wrote an article. The title of that article was <em>Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</em></p>
+<p>In 1977 (almost 40 years ago), the ACM awarded John Backus the Turing Award. John Backus is the "B" in Backus-Naur Form(BNF), and helped invent and define Fortran andAlgol. As part of that award he delivered a lecture and wrote an article. The title of that article was <em>Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</em></p>
 
 <p>One of Backus's chief points was that in order to grow what we can do with software, we must work on languages for expressing software that make these larger programs possible to build, and the limitations the models of programming languages at the time were suffering from. Now, some of his complaints about obesity are a bit quaint considering that every programming language standard in 1977 that he was discussing is positively tiny compared to modern day languages(C++14 anyone? .Net or Java, take your pick.) But this is digression. One of the points his paper builds to is that in order to reason about larger programs, we must build them from smaller programs combined with algebraic primitives, that have useful mathematical properties that enable that reasoning. In other words, he wanted an algebra of programs with programming languages built on these concepts.</p>
 
@@ -1167,7 +1209,7 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 			</li>
 			<li>Examples of Functional Programs
 				<ol>
-					<li><strong>Factorial</strong><em>(Editorial note from Emily: Some things never change...)</em></li>
+					<li><strong>Factorial</strong><em> (Editorial note from Emily: Some things never change...)</em></li>
 					<li>Inner product</li>
 					<li>Matrix multiply</li>
 				</ol>
@@ -1258,18 +1300,30 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 </ol>
 </div>
 
+
+
+<div class="slide">
+<h1>Conclusion</h1>
+<p>If you take one thing away from this talk, try to remember this:</p>
+<h2>Big programs are made of little programs. Finding primitives to combine little programs in "correct" ways helps engineer better software. Abstract algebra helps us understand those combining primitives.</h2>
+</div>
+
+
+
+<div class="slide">
+<h1>Questions?</h1>
+</div>
+
 <div>
 Morphisms
 Maps
 Bijective
 Injective
-Equivalence Classes
 Domains
 
 http://www.stephendiehl.com/posts/abstraction.html?HN_20160519
 
 https://en.wikipedia.org/wiki/Morphism
-https://en.wikipedia.org/wiki/Group_homomorphism
 https://en.wikipedia.org/wiki/Map_(mathematics)
 https://simple.wikipedia.org/wiki/Relation_(mathematics)
 http://www.regentsprep.org/regents/math/algtrig/atp5/lfunction.htm
@@ -1278,13 +1332,7 @@ https://en.wikipedia.org/wiki/Ordered_pair
 https://en.wikipedia.org/wiki/Monoid
 https://en.wikipedia.org/wiki/Commutative_property#Noncommutative_operations_in_mathematics
 https://en.wikipedia.org/wiki/Group_(mathematics)
-https://en.wikipedia.org/wiki/Ring_(mathematics)
-http://mathworld.wolfram.com/EquivalenceClass.html
-
-
-https://en.wikipedia.org/wiki/Intuitionistic_type_theory
-https://en.wikipedia.org/wiki/Homotopy_type_theory
-https://homotopytypetheory.org/blog/
+https://en.wikipedia.org/wiki/Semiring
 </div>
 
 
@@ -1314,6 +1362,7 @@ https://homotopytypetheory.org/blog/
 	<li><a href="http://yosefk.com/blog/parallelism-and-concurrency-need-different-tools.html">Parallelism and concurrency need different tools</a></li>
 	<li><a href="http://joeduffyblog.com/2010/01/03/a-brief-retrospective-on-transactional-memory/">A (brief) retrospective on transactional memory</a>, Joe Duffy</li>
 </ul>
+
 <h2>Type Theory</h2>
 <ul>
 	<li><a href="https://www.cis.upenn.edu/~bcpierce/tapl/">Types and Programming Languages</a>, Benjamin Pierce</li>
@@ -1330,6 +1379,7 @@ https://homotopytypetheory.org/blog/
 	<li><a href="https://dl.dropboxusercontent.com/u/40457956/haskell_sucks.pdf">Haskell Sucks!</a>, Paul Bone</li>
 	<li><a href="http://fexpr.blogspot.com/2011/12/trouble-with-monads.html">The trouble with monads</a>, John Shutt</li>
 	<li><a href="http://comonad.com/reader/2009/recursion-schemes/">Recursion Schemes: A Field Guide</a></li>
+	<li><a href="https://homotopytypetheory.org/">Homotopy Type Theory</a>, if you want a look at what the future may hold, this is it. However, it's a bit esoteric and might not pan out (you've been warned), also... when I say future, I mean (maybe) about 20 to 40 years from now. Also, this isn't really Category Theory, but since I didn't want to make a Mathematical Logic section because I don't have any good references for that, here it goes.</li>
 </ul>
 
 <h2>Haskell</h2>
