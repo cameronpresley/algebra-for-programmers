@@ -631,11 +631,282 @@ milliSleep time = threadDelay ((*) 1000 time)</code></pre>
 
 <div class="slide">
 <h1>Loops</h1>
-<p></p>
+<p>This might be a bit trivial for some of you, but let's look at a simple JavaScript program. I'm sure some of you have seen examples like this in talks before....</p>
 
-TO DO loop fusion map/fold/reduce examples
+<pre><code class="js">function sumSquares(myArray) {
+	var squares = [];
+	for(var x = 0; x &lt; myArray.length; x++) {
+		squares.push(myArray[x] * myArray[x]);
+	}
+
+	var sum = 0;
+	for(var y = 0 ; y &lt; squares.length; y++) {
+		sum += squares[y];
+	}
+	return sum;
+}</code></pre>
+
+<p>So, we're taking a list and squaring each element, then summing the squares. I know, such boring code. Every talk on functional programming will then shock and aww you with this version:</p>
+
+<pre><code class="js">function sumSquaresMapReduce(myArray) {
+	return myArray
+		.map(function (x) { return x * x; })
+		.reduce(function (a,b) { return a + b; }, 0);
+}</code></pre>
+
+<p>So that works great, right?<br/>
+<pre><code class="js">console.log(sumSquaresMapReduce([1, 2, 3, 4, 5])); // 55.</code></pre>
+</p>
 </div>
- 
+
+
+
+<div class="slide">
+<h2>But wait! There's more...</h2>
+<p>Let's see, there's a buzzword I am thinking of...</p>
+</div>
+
+
+
+<div class="slide">
+<h2>But wait! There's more...</h2>
+<p>Let's see, there's a buzzword I am thinking of...</p>
+<p>Oh, that's right!</p>
+</div>
+
+
+
+<div class="slide">
+<h2>But wait! There's more...</h2>
+<p>Let's see, there's a buzzword I am thinking of...</p>
+<p>Oh, that's right!</p>
+<h1>Big Data!</h1>
+<p>And I mean, let's just make it really big! What's a map reduce if we're not going to do some big data?</p>
+
+<p>So let's make our array 100 billion elements long!</p>
+
+<p>Looking at the code, let me make this revised version of our function:
+<pre><code class="js">function sumSquaresMapReduce(myArray) {
+	var tempArray = myArray
+		.map(function (x) { return x * x; });
+	return tempArray.reduce(function (a,b) { return a + b; }, 0);
+}</code></pre>
+Now, the astute among you will observe that we are going to loop over our list <strong>twice</strong>, building a 100 billion element list as an intermediate step, which we will then feed to reduce! Surely we can fix this right?</p>
+
+<p>Oh... also, our list won't fit in memory either. So we clearly can't use JavaScript arrays with their built-in map function and built-in reduce function. No, not only are we building the list twice, we're assuming we can load it in to memory entirely, and then make an intermediate list to double our memory needs!</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Iteratively reducing things</h1>
+<p>For the sake of simplicity, let's define a simple functional-style "iterator": An iterator returns a pair of values: <code>{ value: x, next: iterator() /* () -> iterator */ }</code>, with the convention that <code>next</code> is null if we're at the end of the list. And just to keep things concrete, I'll define a simple JavaScript implementation that wraps a normal JavaScript array here:
+<pre><code class="js">function iteratorFromArray(arr) {
+	const helper = function (x) {
+		return {
+			value: (x &lt; arr.length) ? arr[x] : null,
+			next: ((x + 1) &lt; arr.length) ? function() { return helper(x + 1); } : null
+		};
+	};
+	return function () { return helper(0); };
+}</code></pre>
+Of course... we need to do a <strike>lazy</strike> iterator version of map and reduce, so also, add these versions of map and reduce:
+<pre><code class="js">function iterativeReduce(f, initial, iterator) {
+	var sum = initial;
+	var cur = iterator();
+	do { // Seriously, we can use loops to implement primitives behind the scenes!
+		sum = f(sum, cur.value);
+	} while ((cur.next != null) &amp;&amp; (cur = cur.next())); // if we're being evil, might as well go all the way.
+	return sum;
+}
+
+function iterativeMap(f, iterator) {
+	const helper = function(iter) {
+		const element = iter();
+		return {
+				value: f(element.value),
+				next: (element.next == null) ? null : iterativeMap(f, element.next)
+		};
+	};
+	return function () { return helper(iterator); }
+}</code></pre></p>
+
+<p>Okay, so now, we can say:
+<pre><code class="js">function iterativeSumSquaresMapReduce(iterator) {
+	return iterativeReduce(function (a, b) { return a + b; }, 0,
+		iterativeMap(function (x) { return x * x; }, iterator));
+}
+console.log(iterativeSumSquaresMapReduce(iteratorFromArray(myArray))); // 55</code></pre>
+I mean, we're done. Right? Right...</p>
+</div>
+
+
+
+<div class="slide">
+<h1>The only constant requirement is change</h1>
+<p>Except... we lost some clarity... I mean, what if we later on realize, we need sumSquaresMapReduce to take a custom function for the "map" step?
+<pre><code class="js">function iterativeSumMapReduce(step1, iterator) {
+	return iterativeReduce(function (a, b) { return a + b; }, 0,
+		iterativeMap(step1, iterator));
+}</code></pre></p>
+
+<p>Okay... that works... right? Oh, also, we might not want to sum the list anymore, maybe we need to find the minimum value sometimes? Stop changing requirements! Fine...
+<pre><code class="js">function iterativeMapReduce(step1, step2, seed, iterator) {
+	return iterativeReduce(step2, seed,
+		iterativeMap(step1, iterator));
+}</code></pre></p>
+
+<p>There's something else isn't there?</p>
+
+<p>Yep... we also, need to compute some other statistics while we're at it. And we wouldn't to traverse the list twice now would we! Now... if you think about it, the each statistic will have their own "map", "reduce", and "intial" values, so if we put the functions in a list, we could write a helper function to generate a list of the applications of those functions?</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Fusion powered loops</h1>
+<p>So if we take a list of map functions, we could generate a "bulk" map function from them like so:
+<pre><code class="js">function mapListHelper(functionList) {
+	return function (x) {
+		return functionList.map(function (f) { return f(x); });
+	};
+}</code></pre></p>
+</div>
+
+
+
+<div class="slide">
+<img style="display: block; margin: 0 auto;" src="trollface.jpg" />
+</div>
+
+
+
+<div class="slide">
+<h1>Fusion powered loops</h1>
+<p>So if we take a list of map functions, we could generate a "bulk" map function from them like so:
+<pre><code class="js">function mapListHelper(functionList) {
+	return function (x) {
+		return functionList.map(function (f) { return f(x); });
+	};
+}</code></pre></p>
+<p>And we can do something similar for the "bulk reduce" function:
+<pre><code class="js">function reduceListHelper(functionList) {
+	return function (accumulator, values) {
+		return functionList.map(function (f, i) {
+			return f(accumulator[i], values[i]);
+		});
+	};
+}</code></pre></p>
+
+<p>Now, if we want to count the number of elements in the list, sum the elements, and sum the squares of the elements, we can do this:
+<pre><code class="js">function sum(a,b) { return a + b; }
+
+console.log(iterativeMapReduce(
+	mapListHelper([ function (x) { return 1; }, function (x) { return x; }, function (x) { return x * x; } ]),
+	reduceListHelper([ sum, sum, sum ]),
+	[ 0, 0, 0],
+	iteratorFromArray(myArray))); // [ 5, 15, 55 ]</code></pre></p>
+
+<p>And now, we have not only implemented a <strike>lazy</strike> iterative map reduce, we have implemented an optimization called <strong>stream fusion</strong>. Time to apply for jobs at Google, and start submitting patches to rewrite Hadoop in Javascript with node.js!</p>
+
+<p>I couldn't possibly do anything to make this worse. Right! Right?</p>
+</div>
+
+
+
+<div class="slide">
+<h1>The side effect of being lazy</h1>
+<p>Let's face it, we're not going to be map reducing billions of elements in Javascript, right? Well, you might. I won't unless the paycheck has almost as many zeros as the size of the data set. But we still might want to use this in our single page JS apps that process a few hundred or thousand rows. But before we do that, I want to ask you a question:</p>
+<h2>Does this always give us the same answer as a normal map reduce?</h2>
+</div>
+
+
+
+<div class="slide">
+<h1>The side effect of being lazy</h1>
+<p>Let's face it, we're not going to be map reducing billions of elements in Javascript, right? Well, you might. I won't unless the paycheck has almost as many zeros as the size of the data set. But we still might want to use this in our single page JS apps that process a few hundred or thousand rows. But before we do that, I want to ask you a question:</p>
+<h2>Does this always give us the same answer as a normal map reduce?</h2>
+<p>Let's check to see if it does! I have a function I want to try this with too!
+<pre><code class="js">var globalConspiracy = 0;
+function trustMe(x) {
+	globalConspiracy += (globalConspiracy * x) + 1;
+	return globalConspiracy;
+}
+
+function sum(a,b) { return a + b; }
+const mapHelp = mapListHelper([ function (x) { return 1; }, function (x) { return x; }, function (x) { return x * x; }, trustMe ]);
+const reduceHelp = reduceListHelper([ sum, sum, sum, sum ]);
+
+var myArray = [ 1, 2, 3, 4, 5];
+
+console.log(myArray.map(mapHelp).reduce(reduceHelp, [ 0, 0, 0, 0])); // [ 5, 15, 55, 625 ]
+console.log(iterativeMapReduce(mapHelp, reduceHelp, [ 0, 0, 0, 0], iteratorFromArray(myArray))); // [ 5, 15, 55, 451449 ]
+globalConspiracy = 0;
+console.log(myArray.reverse().map(mapHelp).reduce(reduceHelp, [ 0, 0, 0, 0])); // [ 5, 15, 55, 261 ]
+globalConspiracy = 0;
+myArray = [ 1, 2, 3, 4, 5];
+console.log(iterativeMapReduce(mapHelp, reduceHelp, [ 0, 0, 0, 0], iteratorFromArray(myArray.reverse()))); // [ 5, 15, 55, 261 ]
+globalConspiracy = 0;
+myArray = [ 1, 2, 3, 4, 5];
+console.log(iterativeMapReduce(mapHelp, reduceHelp, [ 0, 0, 0, 0], iteratorFromArray(myArray))); // [ 5, 15, 55, 625 ]</code></pre></p>
+</div>
+
+
+
+<div class="slide">
+<h1>The side effect of being lazy</h1>
+<p>Let's face it, we're not going to be map reducing billions of elements in Javascript, right? Well, you might. I won't unless the paycheck has almost as many zeros as the size of the data set. But we still might want to use this in our single page JS apps that process a few hundred or thousand rows. But before we do that, I want to ask you a question:</p>
+<h2>Does this always give us the same answer as a normal map reduce?</h2>
+<p>The <code>trustMe</code> function makes use of global state ensure that the order of evaluation matters. In fact, it even breaks one of the most wonderful identities involving map:<pre><code class="js">function compose(f,g) { return function (x) { return g(f(x)); }; }
+
+arr.map(f).map(g) === arr.map(compose(f,g));</code></pre>
+When dealing with functions that have no side effects, Map can be "factored" out into the map of the composition of the functions (another type of stream fusion optimization). But global state can breaks this:
+<pre><code class="js">console.log(myArray.map(function (x) { return x + 1; }).map(function (x) { return x * x; })); // [ 4, 9, 16, 25, 36 ]
+console.log(myArray.map(compose(function (x) { return x + 1; }, function (x) { return x * x; }))); // [ 4, 9, 16, 25, 36 ]
+
+globalConspiracy = 0;
+console.log(myArray.map(trustMe).map(trustMe)); // [ 1035, 5176, 93169, 8105704, 4198754673 ]
+globalConspiracy = 0;
+console.log(myArray.map(compose(trustMe, trustMe))); [ 3, 111, 198471, 984771423093, 3.4911891206679774e+25 ]</code></pre>
+
+However, in a pure language language like Haskell, we can just let the compiler perform stream fusion for us automatically, it's one of the standard optimizations built-in to GHC<sup>[1]</sup>.</p>
+
+<p>[1] - GHC can't always figure it out, however, you can write a much more reliable version of this optimization into library like <a href="http://hackage.haskell.org/package/foldl">foldl</a>(see the write up <a href="http://www.haskellforall.com/2013/08/composable-streaming-folds.html">Composable streaming folds</a> and <a href="http://www.haskellforall.com/2013/08/foldl-100-composable-streaming-and.html">foldl-1.0.0: Composable, streaming, and efficient left folds</a></p>
+</div>
+
+
+
+<div class="slide">
+<h1>Streaming with SQL</h1>
+<p>Of course, stream fusion is also a standard optimization in database engines:</p>
+<pre><code class="sql">SELECT count(*), sum(x), sum(x*x) AS sumSquares
+	FROM (SELECT generate_series(1, 5) AS x) myArray;</code></pre>
+Which of course gives us:
+<table>
+	<thead>
+		<tr><th>count</th><th>sum</th><th>sumSquares</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>5</td><td>15</td><td>55</td></tr>
+	</tbody>
+</table>
+And if you do try to quibble with side effects in your aggregate expressions, you'll have to resort to stored procedures(or worse) to get away with it. In general, SQL will prevent you from implementing <code>trustMe</code> or give you an error about needing a <code>GROUP BY</code> or something like that.</p>
+</div>
+
+
+
+<div class="slide">
+<h1>Question: I thought this was a talk about abstract algebra? All I see are weird counters, SQL aggregate functions, bad jokes, and weird bugs?</h1>
+</div>
+
+
+
+<div class="slide">
+<h1>Question: I thought this was a talk about abstract algebra? All I see are weird counters, SQL aggregate functions, bad jokes, and weird bugs?</h1>
+<h1>Answer: We've been doing algebra this whole time though! All the intentional<sup>[1]</sup> bugs in the previous slides were the result of failing use composition primitives that are studied and arise from algebraic objects! But before I get to that, I want to review some elementary algebra!</h1>
+
+<p>[1] All the unintentional bugs are the result of writing slideshows at 3am...</p>
+</div>
 
 
 
@@ -873,6 +1144,13 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 <p>Another way of stating this: Abstract algebra is rarely concerned with concrete examples of algebraic structures, but with the structures themselves. Because of this, it focuses on universal properties, and invariants, that apply to these structures, and universal ways of combining, and composing these structures.</p>
 <h2>Composition of structures</h2>
 <p>Abstract algebra provides a huge catalog of techniques for composing structures and universal properties about these structures. As we saw in the beginning, one way to approach building larger programs is by seeking out techniques of combining programs to create larger programs. In other words, such techniques could be termed an algebra of programs.</p>
+
+<p>One important thing to remember about algebraic structures is that they are the rules that embody them. While we may find examples of these structures, anything that satisifies the rules of those structures is an example OF the structure. They are their own thing. Nothing more and nothing less than the rules that govern them. To quote the Matrix:
+<blockquote><em>Neo:</em> Is that...?<br />
+<em>Cypher:</em> The Matrix? Yeah.<br />
+<em>Neo:</em> Do you always look at it encoded?<br />
+<em>Cypher:</em> Have to. The image translators sort of work for the construct programs but there's way too much information to decode the Matrix. You get used to it, though. Your brain does the translating. I don't even see the code. All I see is blonde, brunette, and redhead. You want a drink?</blockquote>
+The tension between giving in to metaphor and seeing the code itself runs through out the study of mathematical structures.</p>
 
 <p>So let's talk about some basic algebraic structures.</p>
 </div>
@@ -1319,19 +1597,12 @@ Morphisms
 Maps
 Bijective
 Injective
-Domains
-
-http://www.stephendiehl.com/posts/abstraction.html?HN_20160519
 
 https://en.wikipedia.org/wiki/Morphism
 https://en.wikipedia.org/wiki/Map_(mathematics)
 https://simple.wikipedia.org/wiki/Relation_(mathematics)
 http://www.regentsprep.org/regents/math/algtrig/atp5/lfunction.htm
 https://en.wikipedia.org/wiki/Ordered_pair
-
-https://en.wikipedia.org/wiki/Monoid
-https://en.wikipedia.org/wiki/Commutative_property#Noncommutative_operations_in_mathematics
-https://en.wikipedia.org/wiki/Group_(mathematics)
 https://en.wikipedia.org/wiki/Semiring
 </div>
 
@@ -1341,6 +1612,7 @@ https://en.wikipedia.org/wiki/Semiring
 <h1>References</h1>
 <ul>
 	<li><a href="http://worrydream.com/refs/Backus-CanProgrammingBeLiberated.pdf">Can Programming Be Liberated from the von Neumann Style? A Functional Style and Its Algebra of Programs.</a> John Backus, 1977, Turing Award.</li>
+	<li><a href="http://www.stephendiehl.com/posts/abstraction.html">Functional Programming, Abstraction, and Naming Things</a>
 	<li><a href="https://www.amazon.com/Mock-Mockingbird-Other-Logic-Puzzles/dp/0192801422">To Mock a Mockingbird: And Other Logic Puzzles</a></li>
 	<li><a href="http://combinators.info/">Kestrels, Quirky Birds, and Hopeless Egocentricity</a></li>
 	<li><a href="https://www.dreamsongs.com/Files/WhyOfY.pdf">The Why of Y</a></li>
@@ -1386,6 +1658,7 @@ https://en.wikipedia.org/wiki/Semiring
 <ul>
 	<li><a href="https://wiki.haskell.org/Do_notation_considered_harmful">Do Notation Considered Harmful</a></li>
 	<li><a href="http://www.haskellforall.com/2014/10/how-to-desugar-haskell-code.html">How to desugar Haskell code</a></li>
+	 <li><a href="http://www.haskellforall.com/2013/08/composable-streaming-folds.html">Composable streaming folds</a> and <a href="http://www.haskellforall.com/2013/08/foldl-100-composable-streaming-and.html">foldl-1.0.0: Composable, streaming, and efficient left folds</a></li>
 </ul>
 </div>
 </body>
