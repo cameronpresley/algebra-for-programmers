@@ -758,7 +758,7 @@ I mean, we're done. Right? Right...</p>
 
 <p>There's something else isn't there?</p>
 
-<p>Yep... we also, need to compute some other statistics while we're at it. And we wouldn't to traverse the list twice now would we! Now... if you think about it, the each statistic will have their own "map", "reduce", and "intial" values, so if we put the functions in a list, we could write a helper function to generate a list of the applications of those functions?</p>
+<p>Yep... we also, need to compute some other statistics while we're at it. And we wouldn't to traverse the list twice now would we! Now... if you think about it, each statistic will have their own "map", "reduce", and "intial" values, so if we put the functions in a list, we could write a helper function to generate a list of the applications of those functions?</p>
 </div>
 
 
@@ -859,19 +859,19 @@ console.log(iterativeMapReduce(mapHelp, reduceHelp, [ 0, 0, 0, 0], iteratorFromA
 <h2>Does this always give us the same answer as a normal map reduce?</h2>
 <p>The <code>trustMe</code> function makes use of global state ensure that the order of evaluation matters. In fact, it even breaks one of the most wonderful identities involving map:<pre><code class="js">function compose(f,g) { return function (x) { return g(f(x)); }; }
 
-arr.map(f).map(g) === arr.map(compose(f,g));</code></pre>
-When dealing with functions that have no side effects, Map can be "factored" out into the map of the composition of the functions (another type of stream fusion optimization). But global state can breaks this:
+arr.map(f).map(g) ===== arr.map(compose(f,g));</code></pre>
+When dealing with functions that have no side effects, Map can be "factored" out into the map of the composition of the functions (another type of stream fusion optimization). But global state can break this too:
 <pre><code class="js">console.log(myArray.map(function (x) { return x + 1; }).map(function (x) { return x * x; })); // [ 4, 9, 16, 25, 36 ]
 console.log(myArray.map(compose(function (x) { return x + 1; }, function (x) { return x * x; }))); // [ 4, 9, 16, 25, 36 ]
 
 globalConspiracy = 0;
 console.log(myArray.map(trustMe).map(trustMe)); // [ 1035, 5176, 93169, 8105704, 4198754673 ]
 globalConspiracy = 0;
-console.log(myArray.map(compose(trustMe, trustMe))); [ 3, 111, 198471, 984771423093, 3.4911891206679774e+25 ]</code></pre>
+console.log(myArray.map(compose(trustMe, trustMe))); // [ 3, 111, 198471, 984771423093, 3.4911891206679774e+25 ]</code></pre>
 
-However, in a pure language language like Haskell, we can just let the compiler perform stream fusion for us automatically, it's one of the standard optimizations built-in to GHC<sup>[1]</sup>.</p>
+And this is why you must be careful when writing code like this in Javascript. However, in a pure language language like Haskell, we can just let the compiler perform stream fusion for us automatically, it's one of the standard optimizations built-in to GHC<sup>[1]</sup>.</p>
 
-<p>[1] - GHC can't always figure it out, however, you can write a much more reliable version of this optimization into library like <a href="http://hackage.haskell.org/package/foldl">foldl</a>(see the write up <a href="http://www.haskellforall.com/2013/08/composable-streaming-folds.html">Composable streaming folds</a> and <a href="http://www.haskellforall.com/2013/08/foldl-100-composable-streaming-and.html">foldl-1.0.0: Composable, streaming, and efficient left folds</a></p>
+<p>[1] - GHC can't always figure it out, however, you can write a much more reliable version of this optimization into library that will ensure GHC figures it out, for instance: <a href="http://hackage.haskell.org/package/foldl">foldl</a>(see the write up <a href="http://www.haskellforall.com/2013/08/composable-streaming-folds.html">Composable streaming folds</a> and <a href="http://www.haskellforall.com/2013/08/foldl-100-composable-streaming-and.html">foldl-1.0.0: Composable, streaming, and efficient left folds</a></p>
 </div>
 
 
@@ -880,17 +880,18 @@ However, in a pure language language like Haskell, we can just let the compiler 
 <h1>Streaming with SQL</h1>
 <p>Of course, stream fusion is also a standard optimization in database engines:</p>
 <pre><code class="sql">SELECT count(*), sum(x), sum(x*x) AS sumSquares
-	FROM (SELECT generate_series(1, 5) AS x) myArray;</code></pre>
-Which of course gives us:
-<table>
+	FROM (SELECT generate_series(CAST(1 AS BIGINT), CAST(500000 AS BIGINT)) AS x) myArray;</code></pre>
+Which of course gives us<sup>[1]</sup>:
+<table border=1>
 	<thead>
 		<tr><th>count</th><th>sum</th><th>sumSquares</th></tr>
 	</thead>
 	<tbody>
-		<tr><td>5</td><td>15</td><td>55</td></tr>
+		<tr><td>500000</td><td>125000250000</td><td>41666791666750000</td></tr>
 	</tbody>
-</table>
+</table><br />
 And if you do try to quibble with side effects in your aggregate expressions, you'll have to resort to stored procedures(or worse) to get away with it. In general, SQL will prevent you from implementing <code>trustMe</code> or give you an error about needing a <code>GROUP BY</code> or something like that.</p>
+<p>[1] - PostgreSQL reports that this query took 213 milliseconds to execute.</p>
 </div>
 
 
@@ -903,7 +904,7 @@ And if you do try to quibble with side effects in your aggregate expressions, yo
 
 <div class="slide">
 <h1>Question: I thought this was a talk about abstract algebra? All I see are weird counters, SQL aggregate functions, bad jokes, and weird bugs?</h1>
-<h1>Answer: We've been doing algebra this whole time though! All the intentional<sup>[1]</sup> bugs in the previous slides were the result of failing use composition primitives that are studied and arise from algebraic objects! But before I get to that, I want to review some elementary algebra!</h1>
+<h1>Answer: We've been doing algebra this whole time though! All the intentional<sup>[1]</sup> bugs in the previous slides were the result of either failing to use, or failure to follow the rules to properly use composition primitives that are studied and arise from algebraic objects! But before I get to that, I want to review some elementary algebra!</h1>
 
 <p>[1] All the unintentional bugs are the result of writing slideshows at 3am...</p>
 </div>
@@ -1073,8 +1074,8 @@ Of course, tables and queries in SQL are sets of n-tuples(more on that soon), so
 <p>A <em>function</em> is a relation in which one element of the n-tuple is denoted the "key" and the rest of the tuple is denoted as the "value". The set of values that comprise the key's are called the <em>domain</em>, the set of the rest of the values from the n-tuple is called the <em>codomain</em>. Or to use another idea, the <em>domain</em> comes from one set, and the <em>codomain</em> comes from another set, and the relation/function is comprised of a subset of the cross product of the two sets.</p>
 
 <h2>Combining Relations</h2>
-<p>Now that we have some definitions, let's talk about combining relations (or functions). Given two relations that consist of ordered pairs, <code>F</code>(on the sets <code>Y &Cross; Z</code>) and <code>G</code>(on the sets <code>X &Cross; Y</code>), let's define a <code>combine</code>. Create a new set of ordered pairs, matching up the second element(using the <code>second</code> operation we defined on ordered pairs) of the pairs in G with the first element of the ordered pairs in F. Or:
-<pre><code>combine(F,G) = { (x,z) &Element; X &Cross; Z &VerticalBar; &Exists; y &Element; Y : (x,y) &Element; G &and; (y,z) &Element; F }</code></pre></p>
+<p>Now that we have some definitions, let's talk about combining relations (or functions). Given two relations that consist of ordered pairs, <code>F</code>(on the sets <code>X &Cross; Y</code>) and <code>G</code>(on the sets <code>Y &Cross; Z</code>), let's define a <code>combine</code>. Create a new set of ordered pairs, matching up the second element(using the <code>second</code> operation we defined on ordered pairs) of the pairs in G with the first element of the ordered pairs in F. Or:
+<pre><code>combine(F,G) = { (x,z) &Element; X &Cross; Z &VerticalBar; &Exists; y &Element; Y : (x,y) &Element; F &and; (y,z) &Element; G }</code></pre></p>
 
 <p>We can extend this to arbitrary n-tuples, but the idea is the same. In fact, we can realize that <code>combine</code> is simply the function composition operator we discussed earlier.</p>
 </div>
@@ -1195,7 +1196,7 @@ The tension between giving in to metaphor and seeing the code itself runs throug
 <div class="slide">
 <h1>Composition of pure functions</h1>
 <p>First, let's look at function composition, and we'll do it in JavaScript to make it concrete:
-<pre><code class="js">function compose(f,g) { return function(x) { return f(g(x)); }; }</code></pre>
+<pre><code class="js">function compose(f,g) { return function(x) { return g(f(x)); }; }</code></pre>
 Now, let's look at an impure function(which is why I have to do this in JavaScript, since every Haskell function is pure):
 <pre><code class="js">function church(x) {
 	return function (y) {
@@ -1303,7 +1304,7 @@ if a &le; b and b &le; a then a = b (antisymmetry, this is also what separates a
 <h1>Cantor and the development of modern mathematics.</h1>
 <p>Before we continue with more dense formalisms, I want to take a break to talk about the history of mathematics. Georg Cantor was a mathematician who lived between 1845 and 1918. If you've heard of the Cantor Set, this is the same Cantor (and that set has applications outside of pretty pictures of fractals, in particular, it's a useful example for measure theory in analysis).</p>
 
-<p>In 1891, Cantor came out with a proof which set the world of Mathematics ablaze and arguments over his work helped develop modern mathematics. His proof was a deceptively simple discussion of the cardinality(read <strong>size</strong>) of infinite sets. In particular, the first part of his proof showed that the natural numbers(1, 2, 3, and so on), are the "same size" as the integers(0, 1, -1, 2, -2, and so on). Now, we would say he made a "one to one and onto mapping" between these sets. He also showed that the rational numbers(ratios of integers) were the same size. So far, everyone was with him, however, when we he got to the Real numbers(which include the irrationals, like &pi; and the &radic;2 and so on, which, is itself tricky to define), he proved that there is no such mapping. That one can say that there are infinitely more "real numbers" than rationals, the "size" of the reals is a bigger infinity than the infinitely large size of the rationals.</p>
+<p>In 1891, Cantor came out with a proof which set the world of Mathematics ablaze and arguments over his work helped develop modern mathematics. His proof was a deceptively simple discussion of the cardinality(read <strong>size</strong>) of infinite sets. In particular, the first part of his proof showed that the natural numbers(1, 2, 3, and so on), are the "same size" as the integers(0, 1, -1, 2, -2, and so on). Now, we would say he made a "one to one and onto mapping" between these sets. He also showed that the rational numbers(ratios of integers) were the same size. So far, everyone was with him, however, when we he got to the Real numbers(which include the irrationals, like &pi; and the &radic;2 and so on, which are themselves tricky to define), he proved that there is no such mapping. That one can say that there are infinitely more "real numbers" than rationals, the "size" of the reals is a bigger infinity than the infinitely large size of the rationals.</p>
 
 <p>This immediately started a <a href="https://en.wikipedia.org/wiki/Controversy_over_Cantor%27s_theory">storm of controversy</a> about the validity of his proof, and the counter-intuitive observation that there could be different "sizes" of infinity, and lead to such important question as "what exactly IS a proof anyway?".</p>
 
@@ -1328,11 +1329,18 @@ TO DO
 
 
 
+<!--
+<div class="slide">
+<h1>Semiring</h1>
+</div>
+
+
+
 <div class="slide">
 <h1>Morphisms</h1>
 TO DO
 </div>
-
+-->
 
 
 <div class="slide">
@@ -1583,27 +1591,13 @@ Which, looks a lot like the definition of a monoid... mostly because it is the d
 <div class="slide">
 <h1>Conclusion</h1>
 <p>If you take one thing away from this talk, try to remember this:</p>
-<h2>Big programs are made of little programs. Finding primitives to combine little programs in "correct" ways helps engineer better software. Abstract algebra helps us understand those combining primitives.</h2>
+<h2>Big programs are made of little programs. Finding primitives to combine little programs in "correct" ways helps engineer better software. Abstract algebra helps us understand those combining primitives (as well as suggest ways to discover new combining primitives!).</h2>
 </div>
 
 
 
 <div class="slide">
 <h1>Questions?</h1>
-</div>
-
-<div>
-Morphisms
-Maps
-Bijective
-Injective
-
-https://en.wikipedia.org/wiki/Morphism
-https://en.wikipedia.org/wiki/Map_(mathematics)
-https://simple.wikipedia.org/wiki/Relation_(mathematics)
-http://www.regentsprep.org/regents/math/algtrig/atp5/lfunction.htm
-https://en.wikipedia.org/wiki/Ordered_pair
-https://en.wikipedia.org/wiki/Semiring
 </div>
 
 
@@ -1639,6 +1633,7 @@ https://en.wikipedia.org/wiki/Semiring
 <ul>
 	<li><a href="https://www.cis.upenn.edu/~bcpierce/tapl/">Types and Programming Languages</a>, Benjamin Pierce</li>
 	<li><a href="http://chris-taylor.github.io/blog/2013/02/10/the-algebra-of-algebraic-data-types/">The Algebra of Algebraic Data Types, Part 1</a>, <a href="http://chris-taylor.github.io/blog/2013/02/11/the-algebra-of-algebraic-data-types-part-ii/">Part 2</a>, and <a href="http://chris-taylor.github.io/blog/2013/02/13/the-algebra-of-algebraic-data-types-part-iii/">Part 3</a>.</li>
+	<li><a href="http://strictlypositive.org/diff.pdf">The Derivative of a Regular Type is its Type of One-Hole Contexts.</a></li>
 </ul>
 
 <h2>Category Theory</h2>
