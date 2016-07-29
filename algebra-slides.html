@@ -1016,11 +1016,19 @@ Which if read in "English" says: <em>"The set 'Evens' is equal to the set x's in
 	<dt><code>A &setminus; B = { x &Element; A &VerticalBar; x &notin; B }</code></dt>
 	<dd><em>Set difference</em> or <em>complement</em> is an operator that gives a subset A containing only the elements that were not also in B. This could actually be the empty set (<code>&emptyset;</code>).</dd>
 	<dt><code>A &Cross; B = { (a,b) &VerticalBar; a &Element; A, b &Element; B }</code></dt>
+	<dd>The <em>Cartesian Product</em> of two sets creates a third set, consisting of ordered pairs of all the combinations of elements from each set.</dd>
 </dl>
+
+<h2>Tuples</h2>
+<p>A n-tuple is just an ordered "list" of <code>n</code> things. You can also have a set of tuples(in fact, tables in SQL are sets of n-tuples). A 2-tuple is often just called an "ordered pair". Sets, by contrast, are unordered collections. Of course, in classical mathematics, everything is reduced to sets, and in fact, <a href="https://en.wikipedia.org/wiki/Ordered_pair#Defining_the_ordered_pair_using_set_theory">n-tuples can be "encoded" as a set</a>.<sup>[1]</sup>
+
+<p>[1] - It is an interesting exercise to do this, but for the sake of time, has been omitted from this talk.</p>
+<!-- TO DO: It would be really nice to come back and add examples to this slide, possibly creating many more slides in the process, but not tonight. -->
 </div>
 
 
 
+<!--
 <div class="slide">
 <h1>Tuples</h1>
 <p>A n-tuple is just an ordered "list" of <code>n</code> things. You can also have a set of tuples(in fact, tables in SQL are sets of n-tuples). A 2-tuple is often just called an "ordered pair". However, in ordinary mathematics, we like to reduce everything to sets, so I want to suggest we can encode "n-tuples" as sets. Now, the ordered pair: <code>(a,b)</code> can't simply be written as the set <code>{ a, b }</code>, because in a set order doesn't matter. But we can tell if two sets are equal to each other, we can also take the difference of two sets. So we can define a tuple(or "encode a tuple as a set") as follows:
@@ -1036,6 +1044,7 @@ And we can even define expressions in terms of set operations to give us the fir
 
 <p>This "technique" can be extended for any arbitrary "n"-tuples. In true mathematician style I will leave this as an exercise to the reader.</p>
 </div>
+-->
 
 
 
@@ -1322,10 +1331,18 @@ if a &le; b and b &le; a then a = b (antisymmetry, this is also what separates a
 
 
 
+<!--
+TO DO
 <div class="slide">
 <h1>An Algebra of Types</h1>
-TO DO
+<p>We often wish to combine data types, and it turns out we can impose an algebraic structure on combine ways of combining data types. In the case of algebraic data types, we will start with two concepts: 0, and 1. No, not binary, but the idea of type <em>inhabited</em> by 0 or 1 values. A type with zero values we will call <code>Void</a>, and it really is pretty boring. A type with one value may not be very interesting(but hey, it's better than 0!), but we can call it <code>Unit</code>(or 1). Let's also consider two ways to combine types. A product of two types is just a cartesian set product of their values: Given a type <code>A</code> and <code>B</code>, we can say the type <code>A x B</code> is a pair of values, the first value is of type A, and the second value is of type B. We can also encode the idea of the sum of types, <code>A + B</code> as saying a value is either of type A or of type B.</p>
+
+<p>So, if we take <code>Unit + Unit</code>(or 1 + 1), we get... a type that can have one of two values... that sounds a lot like a boolean. Indeed, that works. <code>Void + Unit</code>(0 + 1) is a type that can have... 1 value...</p>
+http://chris-taylor.github.io/blog/2013/02/10/the-algebra-of-algebraic-data-types/
+http://chris-taylor.github.io/blog/2013/02/11/the-algebra-of-algebraic-data-types-part-ii/
+http://chris-taylor.github.io/blog/2013/02/13/the-algebra-of-algebraic-data-types-part-iii/
 </div>
+-->
 
 
 
